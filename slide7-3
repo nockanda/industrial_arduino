@@ -1,0 +1,31 @@
+//측정한 광량이 100lx미만이면 적색램프를 켜고, 100lx이상이면 녹색램프를 켜시오!
+#include <BH1750.h>
+#include <Wire.h>
+
+BH1750 lightMeter;
+
+unsigned long main_t = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  Wire.begin();
+  lightMeter.begin();
+}
+void loop() {
+  if(millis() - main_t > 1000){
+    main_t = millis();
+    float lux = lightMeter.readLightLevel();
+    if(lux > 100){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else{
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }
+    Serial.print("Light: ");
+    Serial.print(lux);
+    Serial.println(" lx");
+  }
+}
