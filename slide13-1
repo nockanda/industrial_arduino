@@ -1,0 +1,28 @@
+//산업용 아두이노
+//아두이노 우노에게 "나는 산업용 아두이이다!" 전송!
+#include <SoftwareSerial.h>
+//산업용 아두이노는 이 기능을 10,11번에서만 사용할 수 있다!
+SoftwareSerial uno(10,11); //우노와 연결된 핀번호
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력
+  //아두이노 우노와 USART통신하는 통신속도를 9600으로 하겠다!
+  uno.begin(9600); 
+}
+
+void loop() {
+  //수신부
+  if(uno.available()){
+    //아두이노 우노로부터 뭔가 메시지가 왔습니다!
+    //우노로 부터 받은 메시지를 PC로 전송해서 출력하시오!
+    Serial.write(uno.read());
+  }
+  //송신부
+  if(millis() - t > 1000){
+    t = millis();
+    uno.println("나는 산업용 아두이노이다");
+  }
+}
+
