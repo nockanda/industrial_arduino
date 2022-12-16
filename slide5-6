@@ -1,0 +1,94 @@
+#include <MsTimer2.h>
+
+int task_run = 0; //0이면 stop, 1이면 task1, 2면 task2, 3이면 task3, 4면 task4
+int task1_counter = 0;
+int task2_counter = 0;
+int task3_counter = 0;
+int task4_counter = 0;
+
+void task(){
+  if(task_run == 0){
+    //멈춤
+  }else if(task_run == 1){
+    if(task1_counter == 0){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }else if(task1_counter == 2){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else if(task1_counter == 4){
+      task1_counter = -1;
+    }
+    task1_counter++;
+  }else if(task_run == 2){
+    if(task2_counter == 0){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,HIGH);
+    }else if(task2_counter == 2){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+    }else if(task2_counter == 4){
+      task2_counter = -1;
+    }
+    task2_counter++;
+  }else if(task_run == 3){
+    if(task3_counter == 0){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }else if(task3_counter == 2){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+    }else if(task3_counter == 4){
+      task3_counter = -1;
+    }
+    task3_counter++;
+  }else if(task_run == 4){
+    if(task4_counter == 0){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else if(task4_counter == 2){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+    }else if(task4_counter == 4){
+      task4_counter = -1;
+    }
+    task4_counter++;
+  }
+}
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT);//중지
+  pinMode(36,INPUT);//테스트1
+  pinMode(35,INPUT);//테스트2
+  pinMode(34,INPUT);//테스트3
+  pinMode(33,INPUT);//테스트4
+  pinMode(38,OUTPUT);//적색신호등
+  pinMode(39,OUTPUT);//녹색신호등
+  MsTimer2::set(500, task); // 500ms period
+  MsTimer2::start();
+}
+
+void loop() {
+  if(digitalRead(37) == HIGH){
+    task_run = 0;
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+  }
+  if(digitalRead(36) == HIGH){
+    task_run = 1;
+    task1_counter = 0;
+  }
+  if(digitalRead(35) == HIGH){
+    task_run = 2;
+    task2_counter = 0;
+  }
+  if(digitalRead(34) == HIGH){
+    task_run = 3;
+    task3_counter = 0;
+  }
+  if(digitalRead(33) == HIGH){
+    task_run = 4;
+    task4_counter = 0;
+  }
+}
+
