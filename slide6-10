@@ -1,0 +1,47 @@
+//온습도센서의 측정값을 2004LCD에 출력하기!
+
+#include "DHT.h"
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);//주소,가로크기,세로크기
+
+#define DHTPIN 6  
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+unsigned long main_t = 0;
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+  lcd.init(); //i2c통신 초기화
+  lcd.backlight(); //백라이트를 켜라!
+  lcd.setCursor(0,0);
+  lcd.print("NOCKANDA SYSTEMS!");
+  lcd.setCursor(0,1);
+  lcd.print("DHT-11 example!");
+}
+void loop() {
+  if(millis() - main_t > 2000){
+    main_t = millis();
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+    //2004lcd한줄은 가급적이면 20개의 캐릭터를 채우면 깔끔하다!
+    String line1 = "TEMP = ";
+    line1 += String(t);
+    line1 += "'C";
+    while(line1.length() < 20){
+      line1 += " ";
+    }
+    
+    lcd.setCursor(0,2);
+    lcd.print(line1);
+    //간단한방법
+    lcd.setCursor(0,3);
+    lcd.print("HUMI = ");
+    lcd.print(h);
+    lcd.print("%   ");
+  }
+}
+
