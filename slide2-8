@@ -1,0 +1,44 @@
+//적색버튼이 2번, 녹색버튼이 3번에 연결되어있다(입력)
+//녹색버튼을 누르면 붕어빵 굽기 작업이 시작된다!
+//적색버튼을 누르면 붕아빵 굽기 작업이 즉시 종료된다!
+
+bool sw = false; //false면 멈춤, true면 작동!
+
+void setup() {
+  Serial.begin(9600);
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+                                  
+  attachInterrupt(digitalPinToInterrupt(2), Interrup1, RISING);
+  attachInterrupt(digitalPinToInterrupt(3), Interrup2, RISING);
+}
+void loop() {
+  //sw가 true일때만 붕어빵을 굽겠다!
+  if(sw == true){
+    Serial.println("붕어빵틀에 뚜껑을 연다");
+    delay(1000);
+    if(sw == false) return;
+    Serial.println("붕아빵판죽을 빵틀에 붓는다");
+    delay(1000);
+    if(sw == false) return;
+    Serial.println("돌려가면서 붕어빵을 굽는다");
+    delay(1000);
+    if(sw == false) return;
+    Serial.println("붕어빵을 빵틀에서 꺼낸다");
+    delay(1000);
+    if(sw == false) return;
+    Serial.println("봉지에 담아서 배출한다");
+    delay(1000);
+    if(sw == false) return;
+  }
+}
+
+void Interrup1(){
+  Serial.println("붕어빵 굽기 작업 끝!!!");
+  sw = false;
+}
+void Interrup2(){
+  Serial.println("붕어빵 굽기 작업 시작!!!");
+  sw = true;
+}
