@@ -1,0 +1,48 @@
+//적색버튼이 37번, 녹색버튼이 36번에 연결되어있고(입력)
+//적색램프가 38번, 황색램프가 39번, 녹색램프가 40번에 연결되어있을때(출력)
+//녹색버튼을 누르면 신호등이 작동되고, 적색버튼을 누르면 신호등이 멈춘다!
+
+bool sw = false; //true면 작업중, false면 멈춤
+
+void setup() {
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+  pinMode(40,OUTPUT);
+}
+
+void loop() {
+  //녹색버튼이 눌려지면~
+  bool green_btn = digitalRead(36);
+  bool red_btn = digitalRead(37);
+  if(green_btn == HIGH){
+    sw = true;//켜져랏 얍!
+    delay(300);
+  }
+  if(red_btn == HIGH){
+    sw = false;//꺼져랏!
+    delay(300);
+  }
+  if(sw == true){
+    //신호등 작동
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(40,HIGH);
+    delay(1000);
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+    digitalWrite(40,LOW);
+    delay(1000);
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+    digitalWrite(40,LOW);
+    delay(1000);
+  }else{
+    //신호등 멈춤;
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(40,LOW);
+  }
+}
