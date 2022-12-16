@@ -1,0 +1,24 @@
+void setup() {
+  Serial.begin(9600);
+  pinMode(6,INPUT);
+  pinMode(7,INPUT);
+  pinMode(8,INPUT);
+  pinMode(9,INPUT);
+}
+
+void loop() {
+  if(digitalRead(6) == HIGH){
+    Serial.println("6번핀 수신(C)");
+  }
+  if(digitalRead(7) == HIGH){
+    Serial.println("7번핀 수신(A)");
+  }
+  if(digitalRead(8) == HIGH){
+    Serial.println("8번핀 수신(D)");
+  }
+  if(digitalRead(9) == HIGH){
+    Serial.println("9번핀 수신(B)");
+  }
+  
+}
+
