@@ -1,0 +1,26 @@
+//아두이노 우노
+//산업용 아두이노에게 "나는 아두이노 우노이다" 전송!
+#include <SoftwareSerial.h>
+//우노는 아무 디지털핀이나 다 가능하다!
+SoftwareSerial faduino(2,3); //산업용 아두이노와 연결된 핀번호
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력
+  faduino.begin(9600);
+}
+
+void loop() {
+  //수신부
+  if(faduino.available()){
+    //산업용 아두이노에서 수신한것을 PC로 전송해서 출력한다!
+    Serial.write(faduino.read());
+  }
+  //송신부
+  if(millis() - t > 1000){
+    t = millis();
+    faduino.println("나는 아두이노 우노이다");
+  }
+}
+
