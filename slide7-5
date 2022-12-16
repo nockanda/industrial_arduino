@@ -1,0 +1,29 @@
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+#define ONE_WIRE_BUS 6
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+
+void setup(void)
+{
+  Serial.begin(9600);
+  sensors.begin();
+}
+void loop(void)
+{ 
+  sensors.requestTemperatures(); //온도값 요청(블록킹)
+  float tempC = sensors.getTempCByIndex(0); //측정한값을 변수에 대입!
+
+  if(tempC != DEVICE_DISCONNECTED_C) 
+  {
+    Serial.print("측정에 성공했습니다! 온도=");
+    Serial.print(tempC);
+    Serial.println("'C");
+  } 
+  else
+  {
+    Serial.println("측정에 실패한 경우!");
+  }
+}
+
