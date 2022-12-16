@@ -1,0 +1,109 @@
+
+#include <ArduinoJson.h>
+#include <MsTimer2.h>
+
+unsigned long t = 0;
+
+int task1_counter = 0;
+bool task1_run = false;
+
+void task(){
+  if(task1_run){
+    if(task1_counter == 0){
+      //붕어빵 틀 뚜껑을 연다!
+      digitalWrite(38,HIGH);
+      digitalWrite(39,HIGH);
+      digitalWrite(40,HIGH);
+      send_response(0);
+    }else if(task1_counter == 4){
+      //붕어빵 반죽을 넣는다
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      digitalWrite(40,LOW);
+      send_response(1);
+    }else if(task1_counter == 8){
+      //뚜껑 닫는다
+      digitalWrite(38,HIGH);
+      digitalWrite(39,HIGH);
+      digitalWrite(40,HIGH);
+      send_response(2);
+    }else if(task1_counter == 12){
+      //굽는다
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+      send_response(3);
+    }else if(task1_counter == 16){
+      //배출한다
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+      send_response(4);
+    }else if(task1_counter == 20){
+      task1_counter=-1;
+    }
+    
+    task1_counter++;
+  }
+}
+
+void setup() {
+  //Serial이라는게 USB로 PC에 연결된 통신라인을 의미한다!
+  Serial.begin(9600);
+  //산업용 아두이노의 모든 포트 개방
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+  MsTimer2::set(500, task);
+  MsTimer2::start();
+}
+
+void loop() {
+  if(Serial.available()){
+    String data = Serial.readStringUntil('\n'); //JSON데이터가 들어온다!
+    data.replace("\r",""); //CR소거
+    
+    StaticJsonDocument<48> doc;
+
+    DeserializationError error = deserializeJson(doc, data);
+    
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
+    }
+    
+    String cmd = doc["cmd"]; // "on"
+
+    if(cmd == "on"){
+      //붕어빵굽기 시작
+      task1_counter = 0;
+      task1_run = true;
+    }else if(cmd == "off"){
+      //붕어빵굽기 종료
+      task1_run = false;
+    }
+    /*
+    //제어가 끝난 시점
+    //응답데이터 만들기
+    //{"response":[0,1,1,1,1,1,1,0,0,0,1,1,1,1]}
+    String response = "{\"response\":[";
+    for(int i = 38;i<=50;i++){
+      response += String(digitalRead(i)) + ",";
+    }
+    response += String(digitalRead(51)) + "]}";
+    Serial.println(response); //산업용 아두이노->PC로 응답하기!
+    */
+  }
+}
+
+void send_response(int tasknum){
+  String response = "{\"tasknum\":"+String(tasknum)+",\"gpio\":[";
+  for(int i = 38;i<=50;i++){
+    response += String(digitalRead(i)) + ",";
+  }
+  response += String(digitalRead(51)) + "]}";
+  Serial.println(response);
+}
+
+
