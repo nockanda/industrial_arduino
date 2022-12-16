@@ -1,0 +1,33 @@
+#include "PMS.h"
+#include <SoftwareSerial.h>
+
+//미세먼지센서의 TX가 10번, RX가 11번에 연결된 상황!
+SoftwareSerial nockanda(10,11);
+
+PMS pms(nockanda);
+PMS::DATA data;
+
+void setup()
+{
+  Serial.begin(9600); //PC-산업아두이노간 통신(결과를 출력하기 위한)
+  nockanda.begin(9600);  //산업아두이노-미세먼지센서간 통신
+  //pms.activeMode(); //패시브모드로 사용하다가 액티브모드로 쓰는데 값이 안날라오면 주석풀기!
+}
+void loop()
+{
+  //미세먼지센서에서 데이터가 수신이된다면~~ 출력하겠다!
+  if (pms.read(data))
+  {
+    Serial.print("PM 1.0 (ug/m3): ");
+    Serial.println(data.PM_AE_UG_1_0);
+
+    Serial.print("PM 2.5 (ug/m3): ");
+    Serial.println(data.PM_AE_UG_2_5);
+
+    Serial.print("PM 10.0 (ug/m3): ");
+    Serial.println(data.PM_AE_UG_10_0);
+
+    Serial.println();
+  }
+}
+
