@@ -1,0 +1,38 @@
+//적(38),황(39), 녹(40)
+//3단 셀렉터의 NO가 37번, NC가 36번에 연결되었다!
+//셀렉터의 방향이 오른쪽으면 녹색램프를 켜고, 중앙이면 황색을켜고, 왼쪽이면 적색을 켜시오!
+
+unsigned long t = 0;
+volatile int manual = 0; //0이면 off, 1이면 적, 2면 황, 3이면 녹색!
+
+void setup() {
+  Serial.begin(9600);
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+  pinMode(40,OUTPUT);
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+                                  
+}
+void loop() {
+  bool selector_no = digitalRead(37);
+  bool selector_nc = digitalRead(36);
+
+  if(selector_no == LOW && selector_nc == HIGH){
+    //오른쪽
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(40,HIGH);
+  }else if(selector_no == HIGH && selector_nc == LOW){
+    //왼쪽
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+    digitalWrite(40,LOW);
+  }else{
+    //가운데
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+    digitalWrite(40,LOW);
+  }
+}
