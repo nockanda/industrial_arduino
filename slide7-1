@@ -1,0 +1,30 @@
+#include <SoftwareSerial.h>
+#include <MHZ19.h>
+
+//이산화탄소센서의 tx가 10번에, rx가 11번에 연결된 상황!
+SoftwareSerial ss(10,11);
+MHZ19 mhz(&ss);
+
+void setup()
+{
+  Serial.begin(9600); //산업용 아두이노-컴퓨터
+  ss.begin(9600); //산업용아두이노-이산화탄소센서간 통신
+}
+void loop()
+{
+  MHZ19_RESULT response = mhz.retrieveData();//센서값 내놓아라!
+  
+  if (response == MHZ19_RESULT_OK)
+  {
+    Serial.print("측정완료! Co2농도=");
+    Serial.print(mhz.getCO2()); //Co2농도
+    Serial.println("PPM");
+  }
+  else
+  {
+    Serial.print("측정에 실패했습니다!");
+  }
+  
+  delay(2000);
+}
+
