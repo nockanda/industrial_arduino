@@ -1,0 +1,112 @@
+/*
+ (시나리오) 38번 빨간램프, 39번 녹색램프, 37번 빨간버튼, 36번 녹색버튼이다!
+38번포트의 task는 아래와 같다!
+on-2초-off-3초-on-10초-off-2초
+39번포트의 task는 아래와 같다!
+on-2초-off-2초-on-5초-off-1초-on-3초-off-1초
+빨간 버튼을 누르면 38번포트의 task가 시작되고 한번더 누르면 종료된다!(토글된다)
+녹색 버튼을 누르면 39번 포트의 task가 시작되거나 종료되거나 한다!
+이것을 타이머 인터럽트로 구현하시오!
+ */
+#include <MsTimer2.h> //헤더파일!
+
+int task1_counter=0;
+int task2_counter=0;
+bool task1_run = false;
+bool task2_run = false;
+
+unsigned long btn1_t = 0;
+unsigned long btn2_t = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+
+void task(){
+  if(task1_run){
+    if(task1_counter == 0){
+      digitalWrite(38,HIGH);
+    }else if(task1_counter == 4){
+      digitalWrite(38,LOW);
+    }else if(task1_counter == 10){
+      digitalWrite(38,HIGH);
+    }else if(task1_counter == 30){
+      digitalWrite(38,LOW);
+    }else if(task1_counter == 34){
+      task1_counter = -1;
+    }
+    task1_counter++;
+  }
+  if(task2_run){
+    if(task2_counter == 0){
+      digitalWrite(39,HIGH);
+    }else if(task2_counter == 4){
+      digitalWrite(39,LOW);
+    }else if(task2_counter == 8){
+      digitalWrite(39,HIGH);
+    }else if(task2_counter == 18){
+      digitalWrite(39,LOW);
+    }else if(task2_counter == 20){
+      digitalWrite(39,HIGH);
+    }else if(task2_counter == 26){
+      digitalWrite(39,LOW);
+    }else if(task2_counter == 28){
+      task2_counter = -1;
+    }
+    task2_counter++;
+  }
+  
+}
+
+void setup() {
+  pinMode(37,INPUT); //빨간버튼
+  pinMode(36,INPUT); //녹색버튼
+  pinMode(38,OUTPUT); //빨간램프
+  pinMode(39,OUTPUT); //녹색램프
+  MsTimer2::set(500, task); //500ms간격으로 함수가 호출된다!
+  MsTimer2::start();
+}
+void loop() {
+  bool now_btn1 = digitalRead(37);
+  bool now_btn2 = digitalRead(36); //녹색
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    //rising
+    btn1_t = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    //falling
+    if(millis() - btn1_t > 20){
+      //적색 버튼을 눌렀다면~task
+      if(task1_run){
+        task1_run = false;
+        //작업이 종료되면 램프도 무조건 꺼져야한다!
+        digitalWrite(38,LOW);
+      }else{
+        task1_run = true;
+        //작업이 시작되면 카운터는 무조건 0부터 시작한다!
+        task1_counter = 0;
+      }
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    //rising
+    btn2_t = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    //falling
+    if(millis() - btn2_t > 20){
+      //녹색 버튼을 눌렀다면~
+      if(task2_run){
+        task2_run = false;
+        //작업이 종료되면 램프도 무조건 꺼져야한다!
+        digitalWrite(39,LOW);
+      }else{
+        task2_run = true;
+        //작업이 시작되면 카운터는 무조건 0부터 시작한다!
+        task2_counter = 0;
+      }
+    }
+  }
+
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
+
