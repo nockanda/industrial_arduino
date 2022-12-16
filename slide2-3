@@ -1,0 +1,61 @@
+//적색버튼이 37번, 녹색버튼이 36번에 연결되어있고(입력)
+//적색램프가 38번, 녹색램프가 39번에 연결되어있을때(출력)
+//1.아무것도 작동안함
+//2.적색램프만 1초간격으로 on/off
+//3.녹색램프만 1초간격으로 on/off
+//4.적색과 녹색 둘다 1초간격으로 on/off
+//녹색버튼을 누르면 1->4방향으로 작업이 변환되고 적색버튼을 누르면 4->1순으로 작업이 변환된다!
+
+int sw = 1; //1이면 1번작업, 2이면 2번작업, 3이면 3번작업, 4면 4번작업
+
+void setup() {
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+}
+
+void loop() {
+  //녹색버튼이 눌려지면~
+  bool green_btn = digitalRead(36);
+  bool red_btn = digitalRead(37);
+  if(green_btn == HIGH){
+    sw++;
+    if(sw > 4) sw = 1;
+  }
+  if(red_btn == HIGH){
+    sw--;
+    if(sw < 1) sw = 4;
+  }
+  if(sw == 1){
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+    delay(1000);
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+    delay(1000);
+  }else if(sw == 2){
+    //적색
+    digitalWrite(39,LOW);
+    digitalWrite(38,HIGH);
+    delay(1000);
+    digitalWrite(38,LOW);
+    delay(1000);
+  }else if(sw == 3){
+    //녹색
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+    delay(1000);
+    digitalWrite(39,LOW);
+    delay(1000);
+  }else if(sw == 4){
+    //둘다
+    digitalWrite(38,HIGH);
+    digitalWrite(39,HIGH);
+    delay(1000);
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    delay(1000);
+  }
+}
