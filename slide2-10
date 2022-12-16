@@ -1,0 +1,23 @@
+//적(38),황(39), 녹(40)
+//셀렉터가 37번에 연결되었다!
+//셀렉터 스위치에 위치에 따라서 적색(38) 혹은 녹색(40) 램프를 작동시키시오!
+
+void setup() {
+  Serial.begin(9600);
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(37,INPUT);
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+  pinMode(40,OUTPUT);
+}
+
+void loop() {
+  bool selector = digitalRead(37);
+  if(selector == HIGH){
+    digitalWrite(38,LOW);
+    digitalWrite(40,HIGH);
+  }else{
+    digitalWrite(38,HIGH);
+    digitalWrite(40,LOW);
+  }
+}
