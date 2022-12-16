@@ -1,0 +1,42 @@
+#include <Bounce2.h> //디바운스 처리를 위한 라이브러리!
+
+//버튼 갯수만큼 생성하되 이름은 달라야한다!
+Bounce bounce1 = Bounce();
+Bounce bounce2 = Bounce();
+
+int mycount = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력하겠다!
+  bounce1.attach(37,INPUT); //빨강
+  bounce1.interval(5);
+  bounce2.attach(36,INPUT); //녹색
+  bounce2.interval(5);
+
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+}
+void loop() {
+  bounce1.update();
+  bounce2.update();
+
+  if ( bounce1.changed() ) {
+    int deboucedInput = bounce1.read();
+    if ( deboucedInput == HIGH ) {
+      //내가 버튼을 눌렀다면~
+      mycount++;
+      Serial.print("현재 카운트=");
+      Serial.println(mycount);
+    }
+  }
+
+  if ( bounce2.changed() ) {
+    int deboucedInput = bounce2.read();
+    if ( deboucedInput == HIGH ) {
+      //내가 버튼을 눌렀다면~
+      mycount--;
+      Serial.print("현재 카운트=");
+      Serial.println(mycount);
+    }
+  }
+}
