@@ -1,0 +1,46 @@
+//키패드로 내가 원하는 채널 번호를 입력하면 해당되는 채널이 토글되도록 하시오!(숫자+#을 누르면 반응하기)
+#include <Keypad.h>
+
+const byte ROWS = 4;
+const byte COLS = 4;
+
+char hexaKeys[ROWS][COLS] = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+};
+byte rowPins[ROWS] = {20, 21, 6, 7}; //R1,2,3,4
+byte colPins[COLS] = {8, 9, 10, 11}; //C1,2,3,4
+
+Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
+
+String mynumber = "";
+
+void setup(){
+  Serial.begin(9600);
+  //모든 산업용 아두이노의 출력핀을 OUTPUT으로 설정한다!
+  //38~51
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+  
+void loop(){
+  char customKey = customKeypad.getKey();
+  
+  if (customKey >= '0' && customKey <= '9'){
+    //숫자를 전역변수에 저장한다!
+    mynumber += customKey;
+  }else if(customKey == '#'){
+    //커맨드입력
+    int num = mynumber.toInt();
+    if(num > 51 || num < 38){
+      Serial.println("그런 채널번호는 존재 하지 않습니다!");
+    }else{
+      digitalWrite(num,!digitalRead(num)); //토글!
+    }
+    mynumber = "";//커맨드가 들어간다음에는 초기화한다!
+  }
+}
+
