@@ -1,0 +1,25 @@
+//아두이노 우노(마스터)
+//산업용 아두이노가 전송한 메시지를 여기다가 출력하시오!
+
+#include <SoftwareSerial.h>
+//우노는 아무 디지털핀이나 다 가능하다!
+SoftwareSerial faduino(2,3); //산업용 아두이노와 연결된 핀번호
+
+//13번핀에 연결된 데이터방향이 HIGH면 송신모드 LOW면 수신모드!
+#define readmode LOW
+#define sendmode HIGH
+#define modepin 13
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력
+  faduino.begin(9600);
+  pinMode(modepin,OUTPUT);
+  //기본은 수신모드
+  digitalWrite(modepin,readmode);
+}
+
+void loop() {
+  if(faduino.available()){
+    Serial.write(faduino.read());
+  }
+}
