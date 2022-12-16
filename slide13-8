@@ -1,0 +1,22 @@
+//아두이노 우노
+//PC와 산업용 아두이노 사이에 RS232중계자 역할을 함!
+
+#include <SoftwareSerial.h>
+SoftwareSerial faduino(2,3);
+
+
+void setup() {
+  Serial.begin(9600);
+  faduino.begin(9600);
+}
+
+void loop() {
+  //산업용 아두이노에서 우노쪽으로 전송할 경우 PC로 전달하기!
+  if(faduino.available()){
+    Serial.write(faduino.read());
+  }
+  //PC에서 아두이노로 전송할 경우 산업용 아두이노로 전달하기!
+  if(Serial.available()){
+    faduino.write(Serial.read());
+  }
+}
