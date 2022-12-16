@@ -1,0 +1,48 @@
+/*
+리모컨에 버튼을 누르면 해당되는 채널에 출력이 토글되도록 하시오!
+○○○= {FFA25D,FF629D,FFE21D}
+○○○= {FF22DD,FF02FD,FFC23D}
+○○○= {FFE01F,FFA857,FF906F}
+○○○= {FF6897,FF9867,FFB04F}
+○○○= {FF30CF,FF18E7,FF7A85}
+*/
+#include <IRremote.h>
+
+unsigned long myremocon[] = {0xFFA25D,0xFF629D,0xFFE21D,0xFF22DD,0xFF02FD,0xFFC23D,0xFFE01F,0xFFA857,0xFF906F,0xFF6897,0xFF9867,0xFFB04F,0xFF30CF,0xFF18E7,0xFF7A85};
+
+int RECV_PIN = 6;
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  irrecv.enableIRIn(); 
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if (irrecv.decode(&results)) {
+    //리모컨의 id가 인식이 된 지점!
+    //results.value
+    //배열안에 있는 id와 비교해서 몇번째 값인지를 알아낼 것이다!
+    int pos = -1;
+    for(int i = 0;i<15;i++){
+      if(myremocon[i] == results.value){
+        pos = i;
+        break;
+      }
+    }
+    if(pos != -1){
+      //해당되는 채널에 출력을 토글시키겠다!
+      //0~15
+      digitalWrite(38+pos,!digitalRead(38+pos));
+    }
+    
+    irrecv.resume(); // Receive the next value
+  }
+  delay(100);
+}
+
