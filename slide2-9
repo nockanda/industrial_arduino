@@ -1,0 +1,72 @@
+//적(38),황(39), 녹(40)
+//적색버튼이 2번, 녹색버튼이 3번에 연결되어있다(입력)
+//녹색버튼을 누르면 녹-황-적 순으로 신호등이 작동한다!(자동)
+//적색버튼을 누르면 녹-황-적 순으로 임의로 변경하기!(수동)
+
+unsigned long t = 0;
+volatile bool sw = true; //false면 수동, true면 자동!
+volatile int manual = 0; //0이면 off, 1이면 적, 2면 황, 3이면 녹색!
+
+void setup() {
+  Serial.begin(9600);
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+  pinMode(40,OUTPUT);
+  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+                                  
+  attachInterrupt(digitalPinToInterrupt(2), Interrup1, RISING);
+  attachInterrupt(digitalPinToInterrupt(3), Interrup2, RISING);
+}
+void loop() {
+  //sw가 true일때만 붕어빵을 굽겠다!
+  if(sw == true){
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(40,HIGH);
+    delay(1000);
+    if(sw == false) return;
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+    digitalWrite(40,LOW);
+    delay(1000);
+    if(sw == false) return;
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+    digitalWrite(40,LOW);
+    delay(1000);
+  }else{
+    if(manual == 0){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+    }else if(manual == 1){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+    }else if(manual == 2){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      digitalWrite(40,LOW);
+    }else if(manual == 3){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      digitalWrite(40,HIGH);
+    }
+  }
+}
+void Interrup1(){
+  //아래 코드는 다음에 해석하는걸로~
+  if(millis() - t > 200){
+    t = millis();
+    Serial.println("수동");
+    sw = false;
+    manual++;
+    if(manual > 3) manual = 0;
+  }
+}
+void Interrup2(){
+  Serial.println("자동");
+  sw = true;
+}
