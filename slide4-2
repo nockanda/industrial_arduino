@@ -1,0 +1,29 @@
+//산업용 아두이노에 task가 1개이다!
+//task1 38번이 1초마다 on/off
+//램프가 켜진다...1초쉰다 ...램프가꺼진다 .... 1초쉰다
+//task마다 타이머가 하나씩 필요하다고 생각하면 OK
+unsigned long t1 = 0; //타이머1
+int step1 = 0; //1==램프가 켜진다, 2==램프가 꺼진다
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT); //빨간 램프
+
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+}
+void loop() {
+  //t1은 산업용 아두이노가 켜졌을때의 시간이다!
+  //millis()는 loop에 의해서 계속 반복적으로 호출되므로 흘러가는 시간이다!
+  if(millis() - t1 > 1000 && step1 == 0){
+    //산업용 아두이노가 켜진지 1초가 지났다!
+    //어떤 작업~
+    t1 = millis();
+    digitalWrite(38,HIGH);
+    step1++;
+  }else if(millis() - t1 > 1000 && step1 == 1){
+    t1 = millis();
+    digitalWrite(38,LOW);
+    step1 = 0;
+  }
+}
