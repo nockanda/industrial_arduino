@@ -1,0 +1,41 @@
+unsigned long t1 = 0; //타이머1
+int step1 = 0; //1==램프가 켜진다, 2==램프가 꺼진다
+unsigned long t2 = 0; //타이머2
+int step2 = 0; //1==램프가 켜진다, 2==램프가 꺼진다
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT); //빨간 램프
+  pinMode(39,OUTPUT); //녹색 램프
+
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+}
+
+void loop() {
+  ///////////task1///////////////////
+  if(millis() - t1 > 1000 && step1 == 0){
+    //산업용 아두이노가 켜진지 1초가 지났다!
+    //어떤 작업~
+    t1 = millis();
+    digitalWrite(38,HIGH);
+    step1++;
+  }else if(millis() - t1 > 1000 && step1 == 1){
+    t1 = millis();
+    digitalWrite(38,LOW);
+    step1 = 0;
+  }
+  ///////////task2///////////////////
+  if(millis() - t2 > 2000 && step2 == 0){
+    //산업용 아두이노가 켜진지 1초가 지났다!
+    //어떤 작업~
+    t2 = millis();
+    digitalWrite(39,HIGH);
+    step2++;
+  }else if(millis() - t2 > 2000 && step2 == 1){
+    t2 = millis();
+    digitalWrite(39,LOW);
+    step2 = 0;
+  }
+}
+
