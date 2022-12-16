@@ -1,0 +1,56 @@
+//37번에 연결된 버튼에 디바운스 처리를 하시오!
+//버튼을 누르면 상승엣지가 발생하고
+//상승엣지가 발생한 지점에서 
+//HIGH신호가 일정시간동안 유지가 된다면 
+//버튼을 누른것으로 간주하겠다!
+
+bool old_btn1 = LOW;
+bool btn_pressed1 = false;
+unsigned long t1 = 0;
+
+bool old_btn2 = LOW;
+bool btn_pressed2 = false;
+unsigned long t2 = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력하겠다!
+  pinMode(37,INPUT); //빨간버튼 
+  pinMode(36,INPUT); //녹색버튼 
+
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+}
+void loop() {
+  bool now_btn1 = digitalRead(37);
+  bool now_btn2 = digitalRead(36);
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    //상승엣지
+    t1 = millis(); //상승엣지의 시간을 저장한다!
+    btn_pressed1 = true;
+  }else if(old_btn1 == HIGH && now_btn1 == HIGH){
+    //버튼을 누르고 있는중
+    if(millis() - t1 > 10 && btn_pressed1 == true){
+      //버튼이 눌려진것이다!
+      Serial.println("버튼1이 눌러졌다");
+      btn_pressed1 = false;
+    }
+  }
+
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    //상승엣지
+    t2 = millis(); //상승엣지의 시간을 저장한다!
+    btn_pressed2 = true;
+  }else if(old_btn2 == HIGH && now_btn2 == HIGH){
+    //버튼을 누르고 있는중
+    if(millis() - t2 > 10 && btn_pressed2 == true){
+      //버튼이 눌려진것이다!
+      Serial.println("버튼2가 눌러졌다");
+      btn_pressed2 = false;
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
+
