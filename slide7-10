@@ -1,0 +1,61 @@
+//녹색버튼을 누르면 도레미파솔라시도가 재생되고 적색버튼을 누르면 재생을 중시키시오!
+#include <arduino-timer.h>
+#define NOTE_C6  1047
+#define NOTE_D6  1175
+#define NOTE_E6  1319
+#define NOTE_F6  1397
+#define NOTE_G6  1568
+#define NOTE_A6  1760
+#define NOTE_B6  1976
+#define NOTE_C7  2093
+
+auto timer = timer_create_default();
+
+bool task1_run = false;
+int task1_counter=0;
+
+bool task(){
+  if(task1_run){
+    if(task1_counter == 0){
+      tone(6,NOTE_C6);
+    }else if(task1_counter == 2){
+      tone(6,NOTE_D6);
+    }else if(task1_counter == 4){
+      tone(6,NOTE_E6);
+    }else if(task1_counter == 6){
+      tone(6,NOTE_F6);
+    }else if(task1_counter == 8){
+      tone(6,NOTE_G6);
+    }else if(task1_counter == 10){
+      tone(6,NOTE_A6);
+    }else if(task1_counter == 12){
+      tone(6,NOTE_B6);
+    }else if(task1_counter == 14){
+      tone(6,NOTE_C7);
+    }else if(task1_counter == 16){
+      task1_counter = -1;
+    }
+    task1_counter++;
+  }
+  return true;
+}
+
+void setup() {
+  pinMode(37,INPUT);//빨강
+  pinMode(36,INPUT);//녹색
+  timer.every(500, task);
+}
+
+void loop() {
+  timer.tick();
+  if(digitalRead(37) == HIGH){
+    //중지 
+    task1_run = false;
+    noTone(6);
+  }
+  if(digitalRead(36) == HIGH){
+    //시작
+    task1_run = true;
+    task1_counter = 0;
+  }
+}
