@@ -1,0 +1,21 @@
+#include <Adafruit_MAX31865.h>
+
+                                           //CS,DI,DO,CLK
+Adafruit_MAX31865 thermo = Adafruit_MAX31865(9, 8, 7, 6);
+
+//녹칸다는 PT100이므로 상수는 아래와 같다!
+#define RREF      430.0
+#define RNOMINAL  100.0
+
+void setup() {
+  Serial.begin(9600);
+  thermo.begin(MAX31865_3WIRE);
+}
+
+
+void loop() {
+  float temp = thermo.temperature(RNOMINAL, RREF);
+  Serial.println(temp);
+  delay(1000);
+}
+
