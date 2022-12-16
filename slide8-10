@@ -1,0 +1,42 @@
+//온도가 100도를 넘어가면 녹색과 적색램프를 켜고
+//70~100사이면 적색램프를 켜고
+//40~70사이면 녹색램프를 켜고
+//40이하면 둘다 끄시오!
+#include "max6675.h"
+
+int thermoDO = 8; //SO
+int thermoCS = 7; //CS
+int thermoCLK = 6; //SCK
+
+MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  Serial.println("MAX6675 test");
+  delay(500);
+}
+
+void loop() {  
+  if(millis() - t > 250){
+    t = millis();
+    float temp = thermocouple.readCelsius();
+    if(temp > 100){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,HIGH);
+    }else if(temp > 70){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }else if(temp > 40){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else{
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+    }
+  }
+}
+
