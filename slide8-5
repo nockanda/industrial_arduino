@@ -1,0 +1,40 @@
+/*
+리모컨에 버튼을 누르면 해당되는 채널에 출력이 토글되도록 하시오!
+○○○= {FFA25D,FF629D,FFE21D}
+○○○= {FF22DD,FF02FD,FFC23D}
+○○○= {FFE01F,FFA857,FF906F}
+○○○= {FF6897,FF9867,FFB04F}
+○○○= {FF30CF,FF18E7,FF7A85}
+*/
+#include <IRremote.h>
+
+int RECV_PIN = 6;
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  irrecv.enableIRIn(); 
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if (irrecv.decode(&results)) {
+    //리모컨의 id가 인식이 된 지점!
+    //results.value
+    if(results.value == 0xFFA25D){
+      //38번이 토글된다!
+      digitalWrite(38,!digitalRead(38));
+    }else if(results.value == 0xFF629D){
+      //39번이 토글된다!
+      digitalWrite(39,!digitalRead(39));
+    }
+    
+    irrecv.resume(); // Receive the next value
+  }
+  delay(100);
+}
+
