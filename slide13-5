@@ -1,0 +1,17 @@
+//산업용 아두이노(슬레이브)
+//산업용 아두이노가 일정간격으로 전송한 메시지를 아두이노 우노쪽에서 출력하시오!
+
+#define rs485 Serial3 //채널3은 RS485전용
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력
+  rs485.begin(9600);
+}
+
+void loop() {
+  rs485.println("구독해주세요!");
+  delay(1000);
+  rs485.println("좋아요 눌러주세요!");
+  delay(1000);
+}
+
