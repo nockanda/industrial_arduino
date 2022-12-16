@@ -1,0 +1,72 @@
+//녹색버튼을 누르면 도레미파솔라시도가 재생되고 적색버튼을 누르면 재생을 중시키시오!
+#define NOTE_C6  1047
+#define NOTE_D6  1175
+#define NOTE_E6  1319
+#define NOTE_F6  1397
+#define NOTE_G6  1568
+#define NOTE_A6  1760
+#define NOTE_B6  1976
+#define NOTE_C7  2093
+
+bool task1_run = false;
+int task1_counter=0;
+unsigned long task1_timer = 0;
+
+void setup() {
+  pinMode(37,INPUT);//빨강
+  pinMode(36,INPUT);//녹색
+}
+
+void loop() {
+  if(digitalRead(37) == HIGH){
+    //중지 
+    task1_run = false;
+    noTone(6);
+  }
+  if(digitalRead(36) == HIGH){
+    //시작
+    task1_run = true;
+    task1_counter = 0;
+    task1_timer = millis();
+  }
+  /////////////////////////////
+  if(task1_run){
+    if(millis() - task1_timer > 1000 && task1_counter == 0){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_C6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 1){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_D6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 2){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_E6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 3){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_F6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 4){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_G6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 5){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_A6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 6){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_B6);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 7){
+      task1_timer = millis();
+      task1_counter++;
+      tone(6,NOTE_C7);
+    }else if(millis() - task1_timer > 1000 && task1_counter == 8){
+      task1_timer = millis();
+      task1_counter = 0;
+    }
+  }
+}
+
