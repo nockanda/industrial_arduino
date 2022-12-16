@@ -1,0 +1,42 @@
+//녹칸다가 생수를 생산한다! 생수기계가 물병에 2L를 정확히 넣으면 2kg가 될 것이다!
+//2kg이 확실하면 녹색램프를 켜고, 아니면 적색램프를 켜시오!(적색램프가 켜지면 제품은 폐기된다)
+//+-0.2kg이내는 허용한다!
+
+#include "HX711.h"
+
+const int LOADCELL_DOUT_PIN = 6;
+const int LOADCELL_SCK_PIN = 7;
+
+
+HX711 scale;
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("HX711 Demo");
+  pinMode(38,OUTPUT);//적색
+  pinMode(39,OUTPUT);//녹색
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+
+  scale.set_scale(-10200); 
+  scale.tare();        
+}
+
+void loop() {
+  float weight = scale.get_units()*-0.453592; //무게를 측정해서 kg으로 바꾸기
+  if(weight >= 1.8 && weight <= 2.2){
+    //정상제품
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+  }else if(weight > 0.1){
+    //비정상제품
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+  }else{
+    //측정중이 아님!
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+  }
+  Serial.println(weight);
+  delay(100);
+}
+
