@@ -1,0 +1,33 @@
+//적색버튼이 37번, 녹색버튼이 36번에 연결되어있고(입력)
+//적색램프가 38번, 녹색램프가 39번에 연결되어있을때(출력)
+//적색버튼을 누르면 적색 램프가 on되고 녹색버튼을 누르면 녹색 램프가 on되도록하시오!
+//안누르고 있을때는 켜지면 안됨!
+
+void setup() {
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+}
+
+void loop() {
+  //녹색버튼이 눌려지면~
+  bool green_btn = digitalRead(36); //눌려졌으면 HIGH, 안눌러졌으면 LOW
+  if(green_btn == HIGH){
+    //녹색램프가 ON된다!
+    digitalWrite(39,HIGH);
+  }else{
+    //녹색램프가 OFF된다!
+    digitalWrite(39,LOW);
+  }
+  //적색버튼이 눌려지면~
+  bool red_btn = digitalRead(37);
+  if(red_btn == HIGH){
+    //적색램프가 ON된다!
+    digitalWrite(38,HIGH);
+  }else{
+    //적색램프가 OFF된다!
+    digitalWrite(38,LOW);
+  }
+}
