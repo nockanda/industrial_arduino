@@ -1,0 +1,49 @@
+//녹칸다의 식물원에 녹색버튼을 누르면 워터펌프로 물을공급을 하는데 광량이 100lx이상이면 물을 공급하지 않는다! 펌프가 작동되면 녹색램프가 켜지고 펌프가 작동안되면 적색램프가 켜진다! (그리고 워터펌프가 작동되고 있더라도 광량이 100lx이하로 떨어지면 즉시 워터펌프가 멈추도록 하시오)
+//이 예제를 펌프가 절대로 작동 안되도록 하려면 어떻게 해야겠는가?
+#include <BH1750.h>
+#include <Wire.h>
+
+BH1750 lightMeter;
+
+unsigned long main_t = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  pinMode(37,INPUT);//빨강
+  pinMode(36,INPUT);//녹색
+  Wire.begin();
+  lightMeter.begin();
+}
+void loop() {
+  bool btn1 = digitalRead(37); //빨강
+  bool btn2 = digitalRead(36); //녹색
+  if(btn1 == HIGH){
+    //빨강버튼 눌려짐
+    pump_off();
+  }
+  if(btn2 == HIGH){
+    //녹색버튼 눌려짐
+    pump_on();
+  }
+  //1초마다 광량을 측정하는 과정
+  if(millis() - main_t > 1000){
+    main_t = millis();
+    float lux = lightMeter.readLightLevel();
+    
+    if(lux < 100){
+      pump_off();
+    }
+  }
+}
+
+void pump_on(){
+  digitalWrite(38,LOW);
+  digitalWrite(39,HIGH);
+}
+void pump_off(){
+  digitalWrite(38,HIGH);
+  digitalWrite(39,LOW);
+}
+
