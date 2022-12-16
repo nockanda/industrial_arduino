@@ -1,0 +1,119 @@
+//녹색버튼을 누르면 붕어빵굽는 태스크가 실행되고 적색버튼을 누르면 종료된다
+//붕어빵을 굽는 각 과정에서 mp3모듈에 적절한 사운드가 출력되도록하시오!
+#include <MsTimer2.h>
+#include <SoftwareSerial.h>
+#include <DFMiniMp3.h>
+
+class Mp3Notify
+{
+public:
+  static void PrintlnSourceAction(DfMp3_PlaySources source, const char* action)
+  {
+    if (source & DfMp3_PlaySources_Sd) 
+    {
+        Serial.print("SD Card, ");
+    }
+    if (source & DfMp3_PlaySources_Usb) 
+    {
+        Serial.print("USB Disk, ");
+    }
+    if (source & DfMp3_PlaySources_Flash) 
+    {
+        Serial.print("Flash, ");
+    }
+    Serial.println(action);
+  }
+  static void OnError(uint16_t errorCode)
+  {
+    // see DfMp3_Error for code meaning
+    Serial.println();
+    Serial.print("Com Error ");
+    Serial.println(errorCode);
+  }
+  static void OnPlayFinished(DfMp3_PlaySources source, uint16_t track)
+  {
+    Serial.print("Play finished for #");
+    Serial.println(track);  
+  }
+  static void OnPlaySourceOnline(DfMp3_PlaySources source)
+  {
+    PrintlnSourceAction(source, "online");
+  }
+  static void OnPlaySourceInserted(DfMp3_PlaySources source)
+  {
+    PrintlnSourceAction(source, "inserted");
+  }
+  static void OnPlaySourceRemoved(DfMp3_PlaySources source)
+  {
+    PrintlnSourceAction(source, "removed");
+  }
+};
+
+SoftwareSerial secondarySerial(10, 11); // RX, TX
+DFMiniMp3<SoftwareSerial, Mp3Notify> mp3(secondarySerial);
+
+int task1_counter = 0;
+bool task1_run = false;
+int task2_counter = 0;
+
+void task(){
+  //여기가 호출되었을때 비상정지 스위치의 상태를 읽어와서 활성되어있다면 아래 기능은 작동안시킨다!
+  if(task1_run){
+    if(task1_counter == 0){
+      Serial.println("붕어빵틀 뚜껑을 연다");
+      mp3.playMp3FolderTrack(3); 
+    }else if(task1_counter == 6){
+      Serial.println("붕어빵 반죽을 집어넣는다");
+      mp3.playMp3FolderTrack(4); 
+    }else if(task1_counter == 12){
+      Serial.println("뚜껑을 덮는다");
+      mp3.playMp3FolderTrack(5); 
+    }else if(task1_counter == 18){
+      Serial.println("굽는다");
+      mp3.playMp3FolderTrack(6); 
+    }else if(task1_counter == 30){
+      Serial.println("배출한다!");
+      mp3.playMp3FolderTrack(7); 
+    }else if(task1_counter == 34){
+      //끝지점!
+      task1_counter = -1;
+    }
+    task1_counter++; //붕어빵굽는 기계의 카운터
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT);//빨강버튼
+  pinMode(36,INPUT);//녹색버튼
+  Serial.println("initializing...");
+  
+  mp3.begin();
+
+  uint16_t volume = mp3.getVolume();
+  Serial.print("volume ");
+  Serial.println(volume);
+  mp3.setVolume(24);
+  
+  uint16_t count = mp3.getTotalTrackCount(DfMp3_PlaySource_Sd);
+  Serial.print("files ");
+  Serial.println(count);
+  
+  Serial.println("starting...");
+  
+  MsTimer2::set(500, task); // 500ms period
+  MsTimer2::start();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if(digitalRead(36) == HIGH){
+    task1_run = true;
+    task1_counter = 0;
+  }
+  if(digitalRead(37) == HIGH){
+    task1_run = false;
+  }
+}
+
+
