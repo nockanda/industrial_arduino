@@ -1,0 +1,25 @@
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);//주소,가로크기,세로크기
+
+void setup()
+{
+  lcd.init(); //i2c통신 초기화
+  lcd.backlight(); //백라이트를 켜라!
+  //lcd.noBacklight(); //백라이트를 꺼라
+  
+  lcd.setCursor(0,0);
+  lcd.print("NOCKANDA FOREVER!!");
+  lcd.setCursor(0,1);
+  lcd.print("NOCKANDA YOUTUBE!!");
+  lcd.setCursor(0,2);
+  lcd.print("SUBSCRIBE!!");
+  lcd.setCursor(0,3);
+  lcd.print("LIKE PLZ!!!!");
+}
+
+
+void loop()
+{
+}
