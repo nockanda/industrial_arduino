@@ -1,0 +1,35 @@
+//리모컨 버튼을 누르면 여러번 눌려진것으로 인식되는데 이것을 1회 누른것으로 보장하도록 하시오!
+unsigned long t1 = 0;
+bool old_btnC = LOW;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(6,INPUT);
+  pinMode(7,INPUT);
+  pinMode(8,INPUT);
+  pinMode(9,INPUT);
+}
+
+void loop() {
+  bool now_btnC = digitalRead(6);
+  if(now_btnC == HIGH && old_btnC == LOW){
+    t1 = millis();
+  }else if(now_btnC == LOW && old_btnC == HIGH){
+    if(millis() - t1 > 50){
+      Serial.println("C버튼이 눌려졌다");
+    }
+  }
+  old_btnC = now_btnC;
+  //나머지 리모컨 버튼도 디바운스 처리를 한번 해보세용~!
+  if(digitalRead(7) == HIGH){
+    Serial.println("7번핀 수신(A)");
+  }
+  if(digitalRead(8) == HIGH){
+    Serial.println("8번핀 수신(D)");
+  }
+  if(digitalRead(9) == HIGH){
+    Serial.println("9번핀 수신(B)");
+  }
+  
+}
+
