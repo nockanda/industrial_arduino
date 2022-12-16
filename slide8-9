@@ -1,0 +1,25 @@
+#include "max6675.h"
+
+int thermoDO = 8; //SO
+int thermoCS = 7; //CS
+int thermoCLK = 6; //SCK
+
+MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600);
+
+  Serial.println("MAX6675 test");
+  delay(500);
+}
+
+void loop() {  
+  if(millis() - t > 250){
+    t = millis();
+    Serial.print("C = "); 
+    Serial.println(thermocouple.readCelsius());
+  }
+}
+
