@@ -1,0 +1,30 @@
+//녹칸다가 남자화장실 자동 소변기를 만든다!
+//사람이 소변기 앞에 서면 3초간 적색램프를 켠다!
+//그리고 볼일보고 사라지면 3초간 적색램프를 켠다!
+
+bool old_state = HIGH;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(6,INPUT); 
+  pinMode(38,OUTPUT);//빨간램프
+}
+
+void loop() {
+  bool now_state = digitalRead(6);
+
+  if(old_state == HIGH && now_state == LOW){
+    //사람이 난입한경우!
+    digitalWrite(38,HIGH);
+    delay(3000);
+    digitalWrite(38,LOW);
+  }else if(old_state == LOW && now_state == HIGH){
+    //사람이 볼일을 다보고 사라진경우!
+    digitalWrite(38,HIGH);
+    delay(3000);
+    digitalWrite(38,LOW);
+  }
+
+  old_state = now_state;
+}
+
