@@ -1,0 +1,62 @@
+#include <MsTimer2.h>
+
+int task1_counter = 0;
+bool task1_run = false;
+int task2_counter = 0;
+
+void task(){
+  //여기가 호출되었을때 비상정지 스위치의 상태를 읽어와서 활성되어있다면 아래 기능은 작동안시킨다!
+  bool stop_btn = digitalRead(35);
+  if(task1_run && stop_btn == LOW){
+    if(task1_counter == 0){
+      Serial.println("붕어빵틀 뚜껑을 연다");
+    }else if(task1_counter == 4){
+      Serial.println("붕어빵 반죽을 집어넣는다");
+    }else if(task1_counter == 8){
+      Serial.println("팥을 넣는다");
+    }else if(task1_counter == 12){
+      Serial.println("뚜껑을 덮는다");
+    }else if(task1_counter == 16){
+      Serial.println("굽는다");
+    }else if(task1_counter == 20){
+      Serial.println("배출한다!");
+    }else if(task1_counter == 24){
+      //끝지점!
+      task1_counter = -1;
+    }
+    task1_counter++; //붕어빵굽는 기계의 카운터
+    if(task2_counter == 0){
+      //켠다
+      digitalWrite(38,HIGH);
+    }else if(task2_counter == 2){
+      //끈다
+      digitalWrite(38,LOW);
+    }else if(task2_counter == 6){
+      //꽁지
+      task2_counter = -1;
+    }
+    task2_counter++;  
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT);//빨강버튼
+  pinMode(36,INPUT);//녹색버튼
+  pinMode(35,INPUT);//비상정지버튼
+  pinMode(38,OUTPUT);//빨간램프
+  MsTimer2::set(500, task); // 500ms period
+  MsTimer2::start();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if(digitalRead(36) == HIGH){
+    task1_run = true;
+    task1_counter = 0;
+  }
+  if(digitalRead(37) == HIGH){
+    task1_run = false;
+    digitalWrite(38,LOW);
+  }
+}
