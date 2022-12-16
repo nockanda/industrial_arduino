@@ -1,0 +1,51 @@
+//37번에 빨간버튼, 36번에 녹색버튼, 38번에 램프가 있다!
+//붕어빵 굽는 기계가 무한히 작동중이다(멈추는건 없다)
+//기본은 붕어뿡을 굽는다
+//녹색버튼을 누르면 붕어빵굽는 재료가 들어가고 빨간버튼을 누르면 잉어빵굽는 재료가 들어간다!
+//붕어빵 굽는중이면 램프를 켜고, 잉어빵 굽는중이면 램프를 끈다!
+bool input = true; //true면 붕어, false면 잉어
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+  //기본이 붕어빵 굽기 이므로 LED는 켜져있어야한다
+  digitalWrite(38,HIGH);
+}
+void loop() {
+  //버튼이 눌러졌냐 아니냐~
+  bool red_btn = digitalRead(37);
+  bool green_btn = digitalRead(36);
+  if(red_btn == HIGH){
+    //빨강버튼 눌려짐!
+    digitalWrite(38,LOW);
+    input = false;
+  }
+  if(green_btn == HIGH){
+    //녹색버튼 눌려짐!
+    digitalWrite(38,HIGH);
+    input = true;
+  }
+  if(input == true){
+    Serial.println("붕어빵틀에 뚜껑을 연다");
+    delay(1000);
+    Serial.println("붕아빵판죽을 빵틀에 붓는다");
+    delay(1000);
+    Serial.println("돌려가면서 붕어빵을 굽는다");
+    delay(1000);
+    Serial.println("붕어빵을 빵틀에서 꺼낸다");
+    delay(1000);
+    Serial.println("봉지에 담아서 배출한다");
+  }else{
+    Serial.println("잉어빵틀에 뚜껑을 연다");
+    delay(1000);
+    Serial.println("잉어빵판죽을 빵틀에 붓는다");
+    delay(1000);
+    Serial.println("돌려가면서 잉어빵을 굽는다");
+    delay(1000);
+    Serial.println("잉어빵을 빵틀에서 꺼낸다");
+    delay(1000);
+    Serial.println("봉지에 담아서 배출한다");
+  }
+}
