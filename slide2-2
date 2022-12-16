@@ -1,0 +1,38 @@
+//적색버튼이 37번, 녹색버튼이 36번에 연결되어있고(입력)
+//적색램프가 38번, 녹색램프가 39번에 연결되어있을때(출력)
+//기본은 항상 적색 LED가 깜빡인다!
+//적색버튼을 누르면 작업이 하나 시작되는데 적색램프가 1초간격으로 반짝이는것이다!
+//녹색버튼을 누르면 녹색 램프가 깜빡인다!
+
+bool sw = false; //false면 적색램프, true면 녹색램프
+
+void setup() {
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+}
+
+void loop() {
+  //녹색버튼이 눌려지면~
+  bool green_btn = digitalRead(36);
+  bool red_btn = digitalRead(37);
+  if(green_btn == HIGH){
+    sw = true;
+  }
+  if(red_btn == HIGH){
+    sw = false;
+  }
+  if(sw == false){
+    digitalWrite(38,HIGH);//ON
+    delay(1000);
+    digitalWrite(38,LOW);//OFF
+    delay(1000);
+  }else{
+    digitalWrite(39,HIGH);//ON
+    delay(1000);
+    digitalWrite(39,LOW);//OFF
+    delay(1000);
+  }
+}
