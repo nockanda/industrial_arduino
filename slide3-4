@@ -1,0 +1,24 @@
+//37번에 연결된 버튼에 디바운스 처리를 하시오!
+//버튼을 눌렀다가 뗄때 상승엣지와 하강엣지 사이의 시간을 측정하시오!
+
+bool old_btn = LOW;
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력하겠다!
+  pinMode(37,INPUT); //빨간버튼 
+}
+void loop() {
+  bool now_btn = digitalRead(37);
+
+  if(old_btn == LOW && now_btn == HIGH){
+    //상승엣지
+    t = millis(); //상승엣지의 시간을 저장한다!
+  }else if(old_btn == HIGH && now_btn == LOW){
+    //하강엣지
+    Serial.print("버튼을 누른 시간=");
+    Serial.println(millis() - t);
+  }
+
+  old_btn = now_btn;
+}
