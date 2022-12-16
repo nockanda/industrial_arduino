@@ -1,0 +1,112 @@
+#include <MsTimer2.h>
+
+int task1_counter = 0;
+int task2_counter = 0;
+int task3_counter = 0;
+bool task_run = false;
+
+void task(){
+  //1번task 적-황-녹 순으로 1초간격으로 바꾸기
+  //2번task 황 1초간격으로 반짝이기
+  //3번task 적 1초간격으로 반짝이기
+  if(task_run){
+    //샐럭터가 1,2,3단중에 어디 위치하고있느냐?
+    bool selector1 = digitalRead(35);
+    bool selector2 = digitalRead(34);
+    int selector_pos = 0;
+    if(selector1 == LOW && selector2 == LOW){
+      selector_pos = 2;
+    }else if(selector1 == HIGH){
+      selector_pos = 3;
+    }else if(selector2 == HIGH){
+      selector_pos = 1;
+    }
+    if(selector_pos == 1){
+      if(task1_counter == 0){
+        //적
+        digitalWrite(38,HIGH);
+        digitalWrite(39,LOW);
+        digitalWrite(40,LOW);
+      }else if(task1_counter == 2){
+        //황
+        digitalWrite(38,LOW);
+        digitalWrite(39,HIGH);
+        digitalWrite(40,LOW);
+      }else if(task1_counter == 4){
+        //녹
+        digitalWrite(38,LOW);
+        digitalWrite(39,LOW);
+        digitalWrite(40,HIGH);
+      }else if(task1_counter == 6){
+        //꽁지
+        task1_counter = -1;
+      }
+      task1_counter++;
+    }
+    if(selector_pos == 2){
+      if(task2_counter == 0){
+        //황 ON 
+        digitalWrite(38,LOW);
+        digitalWrite(39,HIGH);
+        digitalWrite(40,LOW);
+      }else if(task2_counter == 2){
+        //황 OFF
+        digitalWrite(38,LOW);
+        digitalWrite(39,LOW);
+        digitalWrite(40,LOW);
+      }else if(task2_counter == 4){
+        //꽁지
+        task2_counter = -1;
+      }
+      task2_counter++;
+    }
+    if(selector_pos == 3){
+      if(task3_counter == 0){
+        //적 ON 
+        digitalWrite(38,HIGH);
+        digitalWrite(39,LOW);
+        digitalWrite(40,LOW);
+      }else if(task3_counter == 2){
+        //작 OFF
+        digitalWrite(38,LOW);
+        digitalWrite(39,LOW);
+        digitalWrite(40,LOW);
+      }else if(task3_counter == 4){
+        //꽁지
+        task3_counter = -1;
+      }
+      task3_counter++;
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT);//빨강버튼
+  pinMode(36,INPUT);//녹색버튼
+  //34번이 HIGH면 1단
+  //둘다 LOW면 2단
+  //35번이 HIGH면 3단
+  pinMode(35,INPUT);//3단샐럭터NO
+  pinMode(34,INPUT);//3단샐럭터NC
+  pinMode(38,OUTPUT);//적색신호등
+  pinMode(39,OUTPUT);//황색신호등
+  pinMode(40,OUTPUT);//녹색신호등
+  MsTimer2::set(500, task); // 500ms period
+  MsTimer2::start();
+}
+
+void loop() {
+  if(digitalRead(36) == HIGH){
+    task_run = true;
+    task1_counter = 0;
+    task2_counter = 0;
+    task3_counter = 0;
+  }
+  if(digitalRead(37) == HIGH){
+    task_run = false;
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(40,LOW);
+  }
+}
