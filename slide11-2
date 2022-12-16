@@ -1,0 +1,65 @@
+
+#include <ArduinoJson.h>
+
+unsigned long t = 0;
+
+void setup() {
+  //Serial이라는게 USB로 PC에 연결된 통신라인을 의미한다!
+  Serial.begin(9600);
+  //산업용 아두이노의 모든 포트 개방
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if(Serial.available()){
+    String data = Serial.readStringUntil('\n'); //JSON데이터가 들어온다!
+    data.replace("\r",""); //CR소거
+    
+    StaticJsonDocument<48> doc;
+
+    DeserializationError error = deserializeJson(doc, data);
+    
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
+    }
+    
+    String cmd = doc["cmd"]; // "on"
+    int ch = doc["ch"]; // 38
+
+    if(cmd == "on"){
+      digitalWrite(ch,HIGH);
+    }else if(cmd == "off"){
+      digitalWrite(ch,LOW);
+    }else if(cmd == "init"){
+      //아무것도 할 필요없음!
+    }else if(cmd == "all"){
+      if(ch == 0){
+        //전부다 OFF
+        for(int i = 38;i<=51;i++){
+          digitalWrite(i,LOW);
+        }
+      }else if(ch == 1){
+        //전부다 ON
+        for(int i = 38;i<=51;i++){
+          digitalWrite(i,HIGH);
+        }
+      }
+    }
+
+    //제어가 끝난 시점
+    //응답데이터 만들기
+    //{"response":[0,1,1,1,1,1,1,0,0,0,1,1,1,1]}
+    String response = "{\"response\":[";
+    for(int i = 38;i<=50;i++){
+      response += String(digitalRead(i)) + ",";
+    }
+    response += String(digitalRead(51)) + "]}";
+    Serial.println(response); //산업용 아두이노->PC로 응답하기!
+  }
+}
+
+
