@@ -1,0 +1,31 @@
+//LED램프의 마이너스단자가 38번에 연결되었다!
+//푸시버튼의 마이너스단자가 37번에 연결되었다!
+//버튼을 누르면 LED를 토글하시오!
+//LED가 켜져있으면 꺼지고, 꺼져있으면 켜시오!
+
+void setup() {
+  //아~~38번에 연결된것은 LED니까 출력으로 설정!
+  pinMode(38,OUTPUT);
+  //아~~37번에 연결된것은 버튼이니까 입력으로 설정!
+  pinMode(37,INPUT);
+}
+void loop() {
+  //버튼이 눌러졌냐 아니냐~
+  bool btn = digitalRead(37);
+  if(btn == HIGH){
+    //버튼이 눌러짐 
+    //LED가 켜져있냐 꺼져있냐?
+    bool led = digitalRead(38); //켜져있다면 HIGH, 꺼져있다면 LOW
+    if(led == HIGH){
+      //LED가 켜져있는 상태!
+      //LED를 끄는 코드가 들어간다!
+      digitalWrite(38,LOW);
+    }else{
+      //LED가 꺼져있는 상태!
+      //LED를 켜는 코드가 들어간다!
+      digitalWrite(38,HIGH);
+    }
+  }
+  //버튼이 여러번 눌러지는것을 방지하기위해서 시간지연을 한다(초보적인 방법)
+  delay(300);
+}
