@@ -1,0 +1,74 @@
+/*
+1.산업용 아두이노가 붕어빵과 잉어빵을 굽는다.
+2.전체적인 절차는 빵틀을 연다(1)-반죽을 넣는다(1)-뒤집어가면서굽는다-빵을배출한다(1)
+3.붕어빵은 뒤집어가면서굽는 시간이 3초고 잉어빵은 4초라면 어떻게 코드가 되어야겠는가?
+4.산업용 아두이노 한대에 붕어빵과 잉어어빵이 멀티태스킹으로 생산된다고 할때 코드가 어떻게 되어야겠는가?
+ */
+
+unsigned long t1 = 0; //타이머1
+int step1 = 0;
+unsigned long t2 = 0; //타이머2
+int step2 = 0; 
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT); //빨간 램프
+  pinMode(39,OUTPUT); //녹색 램프
+
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+}
+void loop() {
+  ///////////붕어빵///////////////////
+  if(millis() - t1 > 0 && step1 == 0){
+    //빵틀을연다
+    t1 = millis();
+    digitalWrite(38,HIGH);
+    Serial.println("붕어빵틀을 연다");
+    step1++;
+  }else if(millis() - t1 > 1000 && step1 == 1){
+    //반죽을 넣는다
+    t1 = millis();
+    Serial.println("붕어빵 반죽을 넣는다!");
+    step1++;
+  }else if(millis() - t1 > 1000 && step1 == 2){
+    //굽는다
+    t1 = millis();
+    Serial.println("붕어빵을 굽는다!");
+    step1++;
+  }else if(millis() - t1 > 3000 && step1 == 3){
+    //배출한다
+    t1 = millis();
+    Serial.println("붕어빵을 배출한다!");
+    digitalWrite(38,LOW);
+    step1++;
+  }else if(millis() - t1 > 1000 && step1 == 4){
+    t1 = millis();
+    //아무것도 하지 않지만 마지막 시간 
+    step1 = 0;
+  }
+
+  ///////////잉어빵///////////////////
+  if(millis() - t2 > 0 && step2 == 0){
+    t2 = millis();
+    digitalWrite(39,HIGH);
+    Serial.println("\t잉어빵틀을 연다");
+    step2++;
+  }else if(millis() - t2 > 1000 && step2 == 1){
+    t2 = millis();
+    Serial.println("\t잉어빵 반죽을 넣는다");
+    step2++;
+  }else if(millis() - t2 > 1000 && step2 == 2){
+    t2 = millis();
+    Serial.println("\t잉어빵을 굽는다");
+    step2++;
+  }else if(millis() - t2 > 4000 && step2 == 3){
+    t2 = millis();
+    Serial.println("\t잉어빵을 배출한다");
+    digitalWrite(39,LOW);
+    step2++;
+  }else if(millis() - t2 > 1000 && step2 == 4){
+    t2 = millis();
+    step2 = 0;
+  }
+}
