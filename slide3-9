@@ -1,0 +1,30 @@
+//37번에 연결된 버튼을 누르면 38번에 연결된 램프가 토글되도록 하시오!
+
+bool old_btn = LOW;
+bool btn_pressed = false;
+unsigned long t = 0;
+
+void setup() {
+  pinMode(37,INPUT); //버튼
+  pinMode(38,OUTPUT); //램프
+}
+void loop() {
+  bool now_btn = digitalRead(37);
+
+  if(old_btn == LOW && now_btn == HIGH){
+    //상승엣지
+    t = millis(); //상승엣지의 시간을 저장한다!
+    btn_pressed = true;
+  }else if(old_btn == HIGH && now_btn == HIGH){
+    //버튼을 누르고 있는중
+    if(millis() - t > 10 && btn_pressed == true){
+      //버튼이 눌려진것이다!
+      digitalWrite(38,!digitalRead(38)); //토글!
+      btn_pressed = false;
+    }
+  }
+
+  old_btn = now_btn;
+}
+
+
