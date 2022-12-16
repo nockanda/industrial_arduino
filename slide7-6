@@ -1,0 +1,42 @@
+#include <OneWire.h>
+//1.온도를 제어할때 상한선과 하한선을 이용해서 온도를 제어해보기! 가상의 히터가있고 하한선보다 온도가 떨어지면 히터가 작동하고 상한선보다 온도가 높아지면 히터가 멈춘다! 히터의 on/off는 램프를 이용해서 표현하고 적색램프는 꺼짐, 녹색램프는 켜짐이다!
+#include <DallasTemperature.h>
+
+#define ONE_WIRE_BUS 6
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+
+//녹칸다가 희망하는 온도는 15~20도 범위이다!
+float low_limit = 18;
+float high_limit = 20;
+
+void setup(void)
+{
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  sensors.begin();
+}
+void loop(void)
+{ 
+  sensors.requestTemperatures(); //온도값 요청(블록킹)
+  float tempC = sensors.getTempCByIndex(0); //측정한값을 변수에 대입!
+
+  if(tempC != DEVICE_DISCONNECTED_C) 
+  {
+    Serial.println(tempC);
+    if(tempC < low_limit){
+      //히터가 작동되어야하는 상황
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else if(tempC > high_limit){
+      //히터가 꺼져야 하는상황
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }else{
+      //low_limit와 high_limit사이에 온도가 있다!
+      //아무것도 할필요가 없다!
+    }
+  } 
+}
+
