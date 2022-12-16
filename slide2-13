@@ -1,0 +1,98 @@
+//적(38),황(39), 녹(40)
+//적색버튼이 인터럽트핀(2), 녹색버튼이 인터럽트핀(3)에 연결되었다!
+//3단 셀렉터의 NO가 37번, NC가 36번에 연결되었다!
+//녹색버튼을 누르면 기계가 작동한다!
+//적색버튼을 누르면 기계가 멈춘다!
+//셀렉터를 이용해서 3가지 종류의 빵을 구을 수 있다!(붕어, 잉어, 미니붕어빵)
+//만약 붕어빵을 생산중이라면 38번램프를 켜고, 잉어빵이면 39번을 켜고, 미니붕어빵이면 40번램프를 켜시오!
+
+volatile bool is_run = false; //true면 기계 작동, false면 기계멈춤!
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);                          
+  pinMode(39,OUTPUT);
+  pinMode(40,OUTPUT);
+  pinMode(37,INPUT);
+  pinMode(36,INPUT);
+  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+  attachInterrupt(digitalPinToInterrupt(2), Interrup1, RISING);
+  attachInterrupt(digitalPinToInterrupt(3), Interrup2, RISING);
+}
+
+void loop() {
+  if(is_run == true){
+    bool selector_no = digitalRead(37);
+    bool selector_nc = digitalRead(36);
+    
+    if(selector_no == LOW && selector_nc == HIGH){
+      //붕어빵
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+      Serial.println("붕어빵틀에 뚜껑을 연다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("붕아빵판죽을 빵틀에 붓는다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("돌려가면서 붕어빵을 굽는다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("붕어빵을 빵틀에서 꺼낸다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("봉지에 담아서 배출한다");
+      delay(1000);
+    }else if(selector_no == HIGH && selector_nc == LOW){
+      //미니붕어빵
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      digitalWrite(40,HIGH);
+      Serial.println("미니붕어빵틀에 뚜껑을 연다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("미니붕아빵판죽을 빵틀에 붓는다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("돌려가면서 미니붕어빵을 굽는다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("미니붕어빵을 빵틀에서 꺼낸다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("봉지에 담아서 배출한다");
+      delay(1000);
+    }else{
+      //잉어빵
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      digitalWrite(40,LOW);
+      Serial.println("잉어빵틀에 뚜껑을 연다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("잉어빵판죽을 빵틀에 붓는다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("돌려가면서 잉어빵을 굽는다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("잉어빵을 빵틀에서 꺼낸다");
+      delay(1000);
+      if(is_run == false) return;
+      Serial.println("봉지에 담아서 배출한다");
+      delay(1000);
+    }
+  }
+}
+//적색버튼
+void Interrup1(){
+  digitalWrite(38,LOW);
+  digitalWrite(39,LOW);
+  digitalWrite(40,LOW);
+  is_run = false;
+}
+void Interrup2(){
+  is_run = true;
+}
