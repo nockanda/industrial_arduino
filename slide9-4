@@ -1,0 +1,68 @@
+//오후 9시 8분 30초에 녹칸다 포에버를 출력하시오!
+//산업용 아두이노에 연결하기
+// DS1302 CLK/SCLK --> 6
+// DS1302 DAT/IO --> 7
+// DS1302 RST/CE --> 8
+// DS1302 VCC --> 5v
+// DS1302 GND --> GND
+
+#include <ThreeWire.h>  
+#include <RtcDS1302.h>
+
+ThreeWire myWire(7,6,8); // IO, SCLK, CE
+RtcDS1302<ThreeWire> Rtc(myWire);
+
+void setup () 
+{
+    Serial.begin(9600);
+
+    Serial.print("컴파일할때 PC의 시간 : ");
+    Serial.print(__DATE__);
+    Serial.println(__TIME__);
+
+    Rtc.Begin();
+
+    RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+    Serial.print(compiled.Year());
+    Serial.print("/");
+    Serial.print(compiled.Month());
+    Serial.print("/");
+    Serial.print(compiled.Day());
+    Serial.print("/ ");
+    
+    Serial.print(compiled.Hour());
+    Serial.print(":");
+    Serial.print(compiled.Minute());
+    Serial.print(":");
+    Serial.print(compiled.Second());
+    Serial.println();
+    //RTC모듈의 현재시간 지정하기!
+    Rtc.SetDateTime(compiled);
+}
+
+void loop () 
+{
+    RtcDateTime now = Rtc.GetDateTime();
+    //RTC모듈의 현재 시간을 출력한다!
+    Serial.print(now.Year());
+    Serial.print("/");
+    Serial.print(now.Month());
+    Serial.print("/");
+    Serial.print(now.Day());
+    Serial.print("/ ");
+    
+    Serial.print(now.Hour());
+    Serial.print(":");
+    Serial.print(now.Minute());
+    Serial.print(":");
+    Serial.print(now.Second());
+    Serial.println();
+
+    if(now.Hour() == 21 && now.Minute() == 8 && now.Second() == 30){
+      Serial.println("녹칸다 포에버!!");
+    }
+
+    delay(1000); //1초간으로 시간 출력하기!
+}
+
+
