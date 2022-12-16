@@ -1,0 +1,91 @@
+#include <MsTimer2.h> //헤더파일!
+
+int task1_counter = 0;
+int task2_counter = 0;
+bool task_run = false;
+
+unsigned long btn1_t = 0;
+unsigned long btn2_t = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+
+void task()
+{
+  if(task_run){
+    if(task1_counter == 0){
+      digitalWrite(38,HIGH);
+      Serial.println("붕어빵틀을 연다");
+    }else if(task1_counter == 2){
+      Serial.println("붕어빵 반죽을 붓는다");
+    }else if(task1_counter == 4){
+      Serial.println("붕어빵 굽기시작");
+    }else if(task1_counter == 10){
+      digitalWrite(38,LOW);
+      Serial.println("붕어빵 다 굽고 배출하기");
+    }else if(task1_counter == 12){
+      Serial.println("붕어빵 배출종료");
+      task1_counter = -1;
+    }
+    if(task2_counter == 0){
+      digitalWrite(39,HIGH);
+      Serial.println("\t\t잉어빵틀을 연다");
+    }else if(task2_counter == 2){
+      Serial.println("\t\t잉어빵 반죽을 붓는다");
+    }else if(task2_counter == 4){
+      Serial.println("\t\t잉어빵 굽기시작");
+    }else if(task2_counter == 12){
+      digitalWrite(39,LOW);
+      Serial.println("\t\t잉어빵 다 굽고 배출하기");
+    }else if(task2_counter == 14){
+      Serial.println("\t\t잉어빵 배출종료");
+      task2_counter = -1;
+    }
+    task1_counter++;
+    task2_counter++;
+  }
+}
+
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(37,INPUT); //빨간버튼
+  pinMode(36,INPUT); //녹색버튼
+  pinMode(38,OUTPUT); //빨간램프
+  pinMode(39,OUTPUT); //녹색램프
+  MsTimer2::set(500, task); //500ms간격으로 함수가 호출된다!
+  MsTimer2::start();
+  
+}
+void loop()
+{
+  bool now_btn1 = digitalRead(37);
+  bool now_btn2 = digitalRead(36); //녹색
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    //rising
+    btn1_t = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    //falling
+    if(millis() - btn1_t > 20){
+      //적색 버튼을 눌렀다면~
+      task_run = false;
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    //rising
+    btn2_t = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    //falling
+    if(millis() - btn2_t > 20){
+      //녹색 버튼을 눌렀다면~
+      task_run = true;
+      task1_counter = 0;
+      task2_counter = 0;
+    }
+  }
+
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
+
