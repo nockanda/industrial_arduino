@@ -1,0 +1,25 @@
+#include <SoftwareSerial.h>
+
+//블루투스 모듈이 Soft Serial로 tx가 10, rx가 11번에 연결되었다!
+SoftwareSerial BT(10,11);
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600); //PC-산업용 아두이노(RS232)
+  BT.begin(9600); //산업용 아두이노-블루투스 모듈간 통신라인!
+}
+
+void loop() {
+  //블루투스 모듈에서 뭔가 수신하면 시리얼 모니터에 출력한다!
+  if(BT.available()){
+    String text = BT.readStringUntil('\n');
+    Serial.println(text); //블루투스로 수신한것을 PC로전송해서 출력한다!
+  }
+  //1초간격으로 블루투스모듈에게 "나는 산업용 아두이노이다"를 전송한다!
+  if(millis() - t > 1000){
+    t = millis();
+    BT.println("나는 산업용 아두이노이다!");
+  }
+}
+
