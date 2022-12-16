@@ -1,0 +1,89 @@
+//녹칸다가 붕어빵을 굽는다! 붕어빵을 굽는 과정에서 온도가 20도보다 떨어지면 붕어빵굽는 작업을 즉시 중단하고 즉시중단된 상태를 표현하시오!(붕어빵 굽는중-녹색램프켜짐, 굽기 완료-녹색램프꺼짐, 고장-녹색램프 깜빡임)
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <MsTimer2.h>
+
+#define ONE_WIRE_BUS 6
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+
+bool task1_run = false;
+int task1_counter = 0;
+bool task2_run = false;
+int task2_counter =0;
+
+void task(){
+  if(task1_run){
+    if(task1_counter == 0){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      Serial.println("붕어빵틀에 뚜껑을 연다!");
+    }else if(task1_counter == 4){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      Serial.println("붕어빵틀에 반죽을 넣는다!");
+    }else if(task1_counter == 8){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      Serial.println("붕어빵틀 뚜껑을 닫는다!");
+    }else if(task1_counter == 12){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      Serial.println("붕어빵을 굽는다!");
+    }else if(task1_counter == 20){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+      Serial.println("붕어빵을 배출한다!");
+    }else if(task1_counter == 24){
+      //꽁지
+      task1_counter = -1;
+    }
+    task1_counter++; 
+  }
+  if(task2_run){
+    if(task2_counter == 0){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else if(task2_counter == 2){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }else if(task2_counter == 4){
+      task2_counter = -1; 
+    }
+    task2_counter++;
+  }
+}
+void setup(void)
+{
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  sensors.begin();
+  
+  MsTimer2::set(500, task); // 500ms period
+  MsTimer2::start();
+  task1_run = true;
+}
+void loop(void)
+{ 
+  
+  sensors.requestTemperatures(); //온도값 요청(블록킹)
+  float tempC = sensors.getTempCByIndex(0); //측정한값을 변수에 대입!
+  
+  if(tempC != DEVICE_DISCONNECTED_C) 
+  {
+    Serial.println(tempC);
+    if(tempC < 20){
+      task1_run = false;
+      task2_run = true;
+    }else{
+      task1_run = true;
+      task2_run = false;
+    }
+  }else{
+    //온도 측정에 실패 한 경우도 고장난걸로 간주!
+    task1_run = false;
+    task2_run = true;
+  }
+}
+
