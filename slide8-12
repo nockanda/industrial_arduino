@@ -1,0 +1,48 @@
+//온도가 상승률이 0.1보다 크다면 빨간램프를 켜고
+//하강률이 0.1보다 작으면 녹색램프를 켜시오!
+
+#include <Adafruit_MAX31865.h>
+
+                                           //CS,DI,DO,CLK
+Adafruit_MAX31865 thermo = Adafruit_MAX31865(9, 8, 7, 6);
+
+//녹칸다는 PT100이므로 상수는 아래와 같다!
+#define RREF      430.0
+#define RNOMINAL  100.0
+
+float old_temp = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  thermo.begin(MAX31865_3WIRE);
+  //n-1값의 초기값을 대입한다
+  delay(500);
+  old_temp = thermo.temperature(RNOMINAL, RREF);
+  delay(500);
+}
+
+
+void loop() {
+  float temp = thermo.temperature(RNOMINAL, RREF);
+  Serial.print(old_temp);
+  Serial.print("\t");
+  Serial.println(temp);
+  if(temp - old_temp > 0.1){
+    //직전값대비 현재값이 1도가 상승!
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+  }else if(temp - old_temp < -0.1){
+    //직전값대비 현재값이 1도 하강!
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+  }else{
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+  }
+
+  old_temp = temp;
+  delay(500);
+}
+
