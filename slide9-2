@@ -1,0 +1,45 @@
+//산업용 아두이노에서 로터리엔코더를 돌려서 기준이되는 온도값을 업/다운 시키시오!(0.5도 단위로)
+#define NOCK_SW 6
+#define NOCK_CLK 8
+#define NOCK_DT 7
+
+bool pre_sensorA = LOW;
+
+float temp = 20.00;
+
+void setup() {
+  Serial.begin(9600); //나 결과를 PC로 볼꺼야~
+  pinMode(NOCK_SW , INPUT); //버튼을 눌렀냐 아니냐!
+  pinMode(NOCK_CLK, INPUT); 
+  pinMode(NOCK_DT, INPUT);
+}
+
+void loop() {
+  //delay함수 사용금지!
+  //1.지금 센서값을 확인해야하는 타이밍인가?
+  //(=CLK핀에 상승에지가 발생했는가?)
+  bool sensorA = digitalRead(NOCK_CLK);
+  //여기서 할거하고~~
+  if(pre_sensorA == HIGH && sensorA == LOW){
+    //센서A의 rising edge!
+    //2.센서B의 상태를 가지고 와서 비교를 해본다!
+    bool sensorB = digitalRead(NOCK_DT);
+    if(sensorA != sensorB){
+      //시계방향으로 회전하고 있구나~
+      temp += 0.5;
+      Serial.print("현재 설정된온도=");
+      Serial.println(temp);      
+    }else{
+      //반시계방향으로 회전하고 있구나~
+      temp -= 0.5;
+      Serial.print("현재 설정된온도=");
+      Serial.println(temp);
+    }
+  }
+
+
+  pre_sensorA = sensorA;
+  delay(1);
+}
+
+
