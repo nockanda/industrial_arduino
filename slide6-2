@@ -1,0 +1,47 @@
+//푸시버튼을 2개 연결해서 버튼을 누른 횟수를 FND모듈에 업/다운 카운트로 출력한다
+
+#include <Arduino.h>
+#include <TM1637Display.h>
+
+#define CLK 6
+#define DIO 7
+
+TM1637Display display(CLK, DIO); //TM1637인스턴스 생성!
+
+int mycount = 0;
+unsigned long t1 = 0;
+unsigned long t2 = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+
+void setup() {
+  pinMode(37,INPUT);//빨강
+  pinMode(36,INPUT);//녹색
+  display.setBrightness(0x0f);
+  display.showNumberDec(0, false);
+}
+void loop() {
+  bool now_btn1 = digitalRead(37);
+  bool now_btn2 = digitalRead(36);
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    t1 = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    if(millis() -t1 > 50){
+      mycount--;
+      display.showNumberDec(mycount, false);
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    t2 = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    if(millis() -t2 > 50){
+      mycount++;
+      display.showNumberDec(mycount, false);
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
+
