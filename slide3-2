@@ -1,0 +1,33 @@
+#include <Bounce2.h> //디바운스 처리를 위한 라이브러리!
+
+Bounce bounce = Bounce(); //클래스 생성!
+
+int mycount = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력하겠다!
+  bounce.attach(37,INPUT);
+  //숫자가 높으면 높을수록 강도가 좋아진다!
+  //한번 누른것을 한번 눌렀다고 인식할 확률이 높아진다!
+  //내가 의도하고 연속적으로 누른버튼이 1회 눌러진것으로 인식될 확률또한 높아진다!
+  bounce.interval(5);
+
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+}
+void loop() {
+  bounce.update();//이건 묻고따지지도않고 있어야하는것!
+
+  //안눌렀다가 눌렀다
+  //누르고 있다가 뗏다!
+  if ( bounce.changed() ) {
+    int deboucedInput = bounce.read();
+    if ( deboucedInput == HIGH ) {
+      //내가 버튼을 눌렀다면~
+      mycount++;
+      Serial.print("현재 카운트=");
+      Serial.println(mycount);
+    }
+  }
+}
+
