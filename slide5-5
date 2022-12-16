@@ -1,0 +1,79 @@
+#include <MsTimer2.h>
+
+bool task_run = false;
+int task_counter = 0;
+int now_pos = 1;//현재층수
+int target_pos = 1;//목표 층수
+
+void task(){
+  //엘리베이터를 움직이는 작업!
+  //목적을 달성하면 멈춰야한다!
+  if(task_run){
+    //내가 있는 위치가 목표위치이다!
+    //내가 있는 위치보다 목표위치가 크다
+    //내가있는 위치보다 목표위치가 작다!
+    if(now_pos < target_pos){
+      digitalWrite(39,HIGH);
+      Serial.print("현재위치=");
+      Serial.print(now_pos);
+      Serial.print(",목표위치=");
+      Serial.print(target_pos);
+      Serial.println("엘리베이터가 올라갑니다");
+      now_pos++;
+    }else if(now_pos > target_pos){
+      digitalWrite(38,HIGH);
+      Serial.print("현재위치=");
+      Serial.print(now_pos);
+      Serial.print(",목표위치=");
+      Serial.print(target_pos);
+      Serial.println("엘리베이터가 내려갑니다");
+      now_pos--;
+    }else{
+      //원하는 층수에 도달했을경우
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      Serial.print("현재위치=");
+      Serial.print(now_pos);
+      Serial.print(",목표위치=");
+      Serial.print(target_pos);
+      Serial.println("원하는 층수에 도달했습니다!");
+      task_run = false; 
+    }
+  }
+}
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT);//1층
+  pinMode(36,INPUT);//2층
+  pinMode(35,INPUT);//3층
+  pinMode(34,INPUT);//4층
+  pinMode(33,INPUT);//5층
+  pinMode(38,OUTPUT);//적색신호등
+  pinMode(39,OUTPUT);//녹색신호등
+  MsTimer2::set(2000, task); // 500ms period
+  MsTimer2::start();
+}
+
+void loop() {
+  if(digitalRead(37) == HIGH){
+    task_run = true;
+    target_pos = 1;
+  }
+  if(digitalRead(36) == HIGH){
+    task_run = true;
+    target_pos = 2;
+  }
+  if(digitalRead(35) == HIGH){
+    task_run = true;
+    target_pos = 3;
+  }
+  if(digitalRead(34) == HIGH){
+    task_run = true;
+    target_pos = 4;
+  }
+  if(digitalRead(33) == HIGH){
+    task_run = true;
+    target_pos = 5;
+  }
+}
+
