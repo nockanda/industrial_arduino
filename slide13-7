@@ -1,0 +1,28 @@
+//산업용 아두이노
+//산업용 아두이노의 채널1번은 원래부터 RS232포트이고
+//별도의 설정없이 바로 사용가능하다!
+
+#define rs232 Serial1 //채널1일때
+//#define rs232 Serial2 //채널2일때
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력
+  rs232.begin(9600);
+}
+
+void loop() {
+  //수신부
+  if(rs232.available()){
+    String data = rs232.readStringUntil('\n');
+    data.replace("\r",""); //CR소거하기
+    if(data == "안녕하세요"){
+      rs232.println("구독해주세요!");
+    }else if(data == "녹칸다입니다"){
+      rs232.println("좋아요도 눌러주세요!!");
+    }
+  }
+}
+
+
