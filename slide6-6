@@ -1,0 +1,54 @@
+//녹색버튼을 누르면 녹색버튼을 눌려졌다고 출력하고 적색버튼을 누르면 적색버튼이 눌려졌다고 출력하시오!
+
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);//주소,가로크기,세로크기
+
+unsigned long t1 = 0;
+unsigned long t2 = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+
+void setup()
+{
+  pinMode(37,INPUT);//빨강
+  pinMode(36,INPUT);//녹색
+  lcd.init(); //i2c통신 초기화
+  lcd.backlight(); //백라이트를 켜라!
+  //lcd.noBacklight(); //백라이트를 꺼라
+  
+  lcd.setCursor(0,0);
+  lcd.print("NOCKANDA!!");
+  lcd.setCursor(0,1);
+  lcd.print("NOCKANDA YOUTUBE!!");
+  lcd.setCursor(0,2);
+  lcd.print("SUBSCRIBE!!");
+  lcd.setCursor(0,3);
+  lcd.print("LIKE PLZ!!!!");
+}
+void loop()
+{
+  bool now_btn1 = digitalRead(37);
+  bool now_btn2 = digitalRead(36);
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    t1 = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    if(millis() -t1 > 50){
+      lcd.setCursor(0,0);
+      lcd.print("Red btn pressed!    ");
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    t2 = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    if(millis() -t2 > 50){
+      lcd.setCursor(0,0);
+      lcd.print("Green btn pressed!  ");
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
