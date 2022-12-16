@@ -1,0 +1,22 @@
+//산업용 아두이노에 램프 2개를 연결한다!
+//1번 램프는 1초에 한번씩 깜빡이고 2번램프는 2초에 한번마다 깜빡인다!
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT); //빨간 램프
+  pinMode(39,OUTPUT); //녹색 램프
+}
+
+void loop() {
+  //켜지고 1초쉬고 꺼지고 5초쉬고
+  digitalWrite(38,HIGH);
+  delay(1000);
+  digitalWrite(38,LOW);
+  delay(1000);
+
+  //켜지고 2초쉬고 꺼지고 4초쉬고
+  digitalWrite(39,HIGH);
+  delay(2000);
+  digitalWrite(39,LOW);
+  delay(2000);
+}
