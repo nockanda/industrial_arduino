@@ -1,0 +1,80 @@
+//적(38),황(39), 녹(40)
+//적색버튼이 2번, 녹색버튼이 3번에 연결되어있다(입력)
+//2단 셀렉터가 37번에 연결되었다!
+//셀렉터를 HIGH위치로 옮기면 신호등이 자동으로 작동된다
+//셀렉터를 LOW위치로 옮기면 수동모드로 작동된다!
+//수동일때 빨간버튼을 누르면 꺼짐-적-황-녹 순으로 신호등이 켜진다
+//녹색버튼을 누르면 녹-황-적-꺼짐 순으로 켜진다!
+
+unsigned long t = 0;
+volatile int manual = 0; //0이면 off, 1이면 적, 2면 황, 3이면 녹색!
+
+void setup() {
+  Serial.begin(9600);
+  //입력과 출력은 pinMode함수로 방향을 결정해주어야한다!
+  pinMode(38,OUTPUT);
+  pinMode(39,OUTPUT);
+  pinMode(40,OUTPUT);
+  pinMode(37,INPUT);
+  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+                                  
+  attachInterrupt(digitalPinToInterrupt(2), Interrup1, RISING);
+  attachInterrupt(digitalPinToInterrupt(3), Interrup2, RISING);
+}
+void loop() {
+  bool selector = digitalRead(37); //HIGH면 자동모드, LOW면 수동모드
+  if(selector == HIGH){
+    manual = 0;
+    digitalWrite(38,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(40,HIGH);
+    delay(1000);
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+    digitalWrite(40,LOW);
+    delay(1000);
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+    digitalWrite(40,LOW);
+    delay(1000);
+  }else{
+    if(manual == 0){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+    }else if(manual == 1){
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+      digitalWrite(40,LOW);
+    }else if(manual == 2){
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+      digitalWrite(40,LOW);
+    }else if(manual == 3){
+      digitalWrite(38,LOW);
+      digitalWrite(39,LOW);
+      digitalWrite(40,HIGH);
+    }
+  }
+}
+
+//적색버튼
+void Interrup1(){
+  //아래 코드는 다음에 해석하는걸로~
+  if(millis() - t > 200){
+    t = millis();
+    
+    manual++;
+    if(manual > 3) manual = 0;
+  }
+}
+void Interrup2(){
+  //아래 코드는 다음에 해석하는걸로~
+  if(millis() - t > 200){
+    t = millis();
+    
+    manual--;
+    if(manual < 0) manual = 3;
+  }
+}
