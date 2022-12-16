@@ -1,0 +1,36 @@
+//초음파센서로 측정한 거리가 5cm미만이면 녹색램프를 켜고 아니면 적색램프를 켜시오!
+
+#define trig 6
+#define echo 7
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(trig,OUTPUT);
+  pinMode(echo,INPUT);
+  pinMode(38,OUTPUT);//적색램프
+  pinMode(39,OUTPUT);//녹색램프
+}
+
+void loop() {
+  //산업용 아두이노에서 trig핀으로 초음파를 발사한다!
+  digitalWrite(trig,LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig,LOW);
+  //trig핀에서 발사된 초음파가 반사되어서 echo핀으로 들어올때까지의 시간을 측정한다!
+  //단위는 마이크로초이다!
+  int mytime = pulseIn(echo, HIGH); //us //trig핀에서 echo핀으로 반사가 되기전까지 delay
+  //거리인데 단위는 cm이다!
+  float dist = (mytime / 29.0)/2;
+  Serial.println(dist);
+  if(dist < 5){
+    digitalWrite(38,LOW);
+    digitalWrite(39,HIGH);
+  }else{
+    digitalWrite(38,HIGH);
+    digitalWrite(39,LOW);
+  }
+  delay(100);
+}
+
