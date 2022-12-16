@@ -1,0 +1,24 @@
+//산업용 아두이노
+//PC에서 RS485통신으로 문자열을 전송하면 문자열로 응답하시오!
+
+#define rs485 Serial3
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600); //결과를 PC에 출력
+  rs485.begin(9600);
+}
+
+void loop() {
+  //수신부
+  if(rs485.available()){
+    String data = rs485.readStringUntil('\n');
+    data.replace("\r",""); //CR소거하기
+    if(data == "안녕하세요"){
+      rs485.println("구독해주세요!");
+    }else if(data == "녹칸다입니다"){
+      rs485.println("좋아요도 눌러주세요!!");
+    }
+  }
+}
