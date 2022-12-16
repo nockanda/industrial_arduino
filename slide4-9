@@ -1,0 +1,47 @@
+#include <MsTimer2.h> //헤더파일!
+
+int task1_counter = 0;
+int task2_counter = 0;
+
+void task()
+{
+  if(task1_counter == 0){
+    Serial.println("붕어빵틀을 연다");
+  }else if(task1_counter == 2){
+    Serial.println("붕어빵 반죽을 붓는다");
+  }else if(task1_counter == 4){
+    Serial.println("붕어빵 굽기시작");
+  }else if(task1_counter == 10){
+    Serial.println("붕어빵 다 굽고 배출하기");
+  }else if(task1_counter == 12){
+    Serial.println("붕어빵 배출종료");
+    task1_counter = -1;
+  }
+  if(task2_counter == 0){
+    Serial.println("\t\t잉어빵틀을 연다");
+  }else if(task2_counter == 2){
+    Serial.println("\t\t잉어빵 반죽을 붓는다");
+  }else if(task2_counter == 4){
+    Serial.println("\t\t잉어빵 굽기시작");
+  }else if(task2_counter == 12){
+    Serial.println("\t\t잉어빵 다 굽고 배출하기");
+  }else if(task2_counter == 14){
+    Serial.println("\t\t잉어빵 배출종료");
+    task2_counter = -1;
+  }
+  task1_counter++;
+  task2_counter++;
+}
+
+void setup()
+{
+  Serial.begin(9600);
+  MsTimer2::set(500, task); //500ms간격으로 함수가 호출된다!
+  MsTimer2::start();
+}
+
+void loop()
+{
+  //여기는 아무것도 없네~
+}
+
