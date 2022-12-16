@@ -1,0 +1,70 @@
+//녹칸다의 RFID태그중 1번태그의 ID가 d4 6d a2 2a 31일때 1번카드를 구분하시오!
+
+#include "RFID.h"
+#include <DigitalIO.h>
+
+#define SS_PIN 9
+#define RST_PIN 10
+ 
+RFID rfid(SS_PIN, RST_PIN); 
+
+String cardNum;
+unsigned long RFID;
+
+byte mycard[] = {0xd4, 0x6d, 0xa2, 0x2a, 0x31};
+
+void setup()
+{ 
+  Serial.begin(9600);
+  Serial.println("initilizing RFID...");
+  rfid.init(); // initilize the RFID module
+  Serial.println("start ");
+}
+
+void loop()
+{
+ readRfid();
+ //printRfid();
+}
+
+void readRfid()
+{
+  if (rfid.isCard())
+  {
+    if (rfid.readCardSerial())
+    {
+      //인식된 카드는 무조건 권한이 있을거야~~!
+      bool is_checked = true;
+      for (int i=0; i<=4; i++)//card value: "xyz xyz xyz xyz xyz" (15 digits maximum; 5 pairs of xyz)hence 0<=i<=4 //
+      {
+        //인식된 id와 저장된 id가 전부 일치하면 권한이 있는 카드이다!
+        cardNum += String(rfid.serNum[i],HEX);
+        //단하나라도 다른게 있으면 전체가 다 틀린것이다!
+        if(rfid.serNum[i] != mycard[i]){
+          is_checked=false;
+        }
+      }
+
+      if(is_checked){
+        Serial.println("권한이 있는 카드입니다!(O)");
+      }else{
+        Serial.println("권한이 없는 카드입니다!(X)");
+      }
+    }
+  }
+  rfid.halt();
+  delay(500); 
+}
+
+void printRfid()
+{
+ if (cardNum != '\0')
+ {
+    Serial.println("Card found");
+    Serial.print("Cardnumber: ");
+    Serial.println(cardNum);
+    cardNum.remove(0);
+    delay(500); 
+ }
+}
+
