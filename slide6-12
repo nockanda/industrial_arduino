@@ -1,0 +1,93 @@
+//(2)에서 기준이되는 온도를 녹색버튼를 누르면 1도씩 올리고 적색버튼을 누르면 1도씩 내리시오!
+
+#include "DHT.h"
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);//주소,가로크기,세로크기
+
+#define DHTPIN 6  
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+unsigned long main_t = 0;
+unsigned long t1 = 0;
+unsigned long t2 = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+int limit = 20;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(38,OUTPUT);//빨강
+  pinMode(39,OUTPUT);//녹색
+  pinMode(37,INPUT);//빨강
+  pinMode(36,INPUT);//녹색
+  dht.begin();
+  lcd.init(); //i2c통신 초기화
+  lcd.backlight(); //백라이트를 켜라!
+  lcd.setCursor(0,0);
+  lcd.print("NOCKANDA SYSTEMS!");
+}
+
+void loop() {
+  //버튼을 누르면 기준온도를 설정하겠다!
+  bool now_btn1 = digitalRead(37);
+  bool now_btn2 = digitalRead(36);
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    t1 = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    if(millis() -t1 > 50){
+      limit--;
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    t2 = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    if(millis() -t2 > 50){
+      limit++;
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+
+  ////////////////////////////////////////
+  if(millis() - main_t > 2000){
+    main_t = millis();
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+
+    if(t >= limit){
+      //녹색
+      digitalWrite(38,LOW);
+      digitalWrite(39,HIGH);
+    }else{
+      //적색
+      digitalWrite(38,HIGH);
+      digitalWrite(39,LOW);
+    }
+    //현재 설정된 기준값
+    lcd.setCursor(0,1);
+    lcd.print("LIMIT TEMP=");
+    lcd.print(limit);
+    lcd.print("'C   ");
+    //2004lcd한줄은 가급적이면 20개의 캐릭터를 채우면 깔끔하다!
+    String line1 = "TEMP = ";
+    line1 += String(t);
+    line1 += "'C";
+    while(line1.length() < 20){
+      line1 += " ";
+    }
+    
+    lcd.setCursor(0,2);
+    lcd.print(line1);
+    //간단한방법
+    lcd.setCursor(0,3);
+    lcd.print("HUMI = ");
+    lcd.print(h);
+    lcd.print("%   ");
+  }
+}
+
