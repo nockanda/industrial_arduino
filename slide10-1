@@ -1,0 +1,35 @@
+//C#에서 전송되는 명령어의 예시
+//turnon=38  38번을 켜라!
+//turnoff=39  39번을 꺼라!
+
+unsigned long t = 0;
+
+void setup() {
+  //Serial이라는게 USB로 PC에 연결된 통신라인을 의미한다!
+  Serial.begin(9600);
+  //산업용 아두이노의 모든 포트 개방
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if(Serial.available()){
+    String data = Serial.readStringUntil('\n'); //turnon=38\r\n -> turnon=38\r
+    data.replace("\r",""); //CR소거
+    //같다기호(=)를 기준으로 데이터를 양쪽으로 나눈다!
+    int pos = data.indexOf("=");
+    String data1 = data.substring(0,pos);
+    String data2 = data.substring(pos+1,data.length()); //숫자로 바꾸는게 더 이득!
+    int ch = data2.toInt();
+
+    if(ch <= 51 && ch >= 38){
+      if(data1 == "turnon"){
+        digitalWrite(ch,HIGH);
+      }else if(data1 == "turnoff"){
+        digitalWrite(ch,LOW);
+      }
+    }
+  }
+}
+
