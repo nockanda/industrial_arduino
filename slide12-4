@@ -1,0 +1,48 @@
+//기존 RS232로 통신해서 제어되던 코드를 블루투스로 변경!
+#include <SoftwareSerial.h>
+
+SoftwareSerial BT(10,11);
+
+unsigned long t = 0;
+
+void setup() {
+  //Serial이라는게 USB로 PC에 연결된 통신라인을 의미한다!
+  Serial.begin(9600);
+  BT.begin(9600);
+  //산업용 아두이노의 모든 포트 개방
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if(BT.available()){
+    String data = BT.readStringUntil('\n'); //turnon=38\r\n -> turnon=38\r
+    data.replace("\r",""); //CR소거
+    //같다기호(=)를 기준으로 데이터를 양쪽으로 나눈다!
+    int pos = data.indexOf("=");
+    String data1 = data.substring(0,pos);
+    String data2 = data.substring(pos+1,data.length()); //숫자로 바꾸는게 더 이득!
+    int ch = data2.toInt();
+
+    if(ch <= 51 && ch >= 38){
+      if(data1 == "turnon"){
+        digitalWrite(ch,HIGH);
+      }else if(data1 == "turnoff"){
+        digitalWrite(ch,LOW);
+      }else if(data1 == "init"){
+        //아무것도 할것은 없고!
+      }
+    }
+
+    //제어한 결과를 응답으로 전송해주기!
+    String response = "";
+    for(int i=38;i<51;i++){
+      response += String(digitalRead(i)) + ",";
+    }
+    response += String(digitalRead(51));
+    BT.write(response.c_str());
+  }
+}
+
+
