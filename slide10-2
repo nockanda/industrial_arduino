@@ -1,0 +1,40 @@
+//C#에서 JSON으로 명령어가 날라온데!
+#include <ArduinoJson.h>
+
+unsigned long t = 0;
+
+void setup() {
+  //Serial이라는게 USB로 PC에 연결된 통신라인을 의미한다!
+  Serial.begin(9600);
+  //산업용 아두이노의 모든 포트 개방
+  for(int i = 38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if(Serial.available()){
+    String data = Serial.readStringUntil('\n'); //JSON데이터가 들어온다!
+    data.replace("\r",""); //CR소거
+    
+    StaticJsonDocument<48> doc;
+
+    DeserializationError error = deserializeJson(doc, data);
+    
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
+    }
+    
+    String cmd = doc["cmd"]; // "on"
+    int ch = doc["ch"]; // 38
+
+    if(cmd == "on"){
+      digitalWrite(ch,HIGH);
+    }else if(cmd == "off"){
+      digitalWrite(ch,LOW);
+    }
+  }
+}
+
