@@ -1,0 +1,249 @@
+#include <SoftwareSerial.h>
+#include "CRC16.h" //CRC라이브러리
+#include "CRC.h" //CRC라이브러리
+#include <cQueue.h>
+
+//MAX3232가 2번 3번핀에 연결되어있다!
+SoftwareSerial max3232(2,3);
+
+Queue_t    q;
+
+byte res_buff[50];
+
+struct Modbus{
+  byte id;
+  byte fc;
+  unsigned long t;
+  uint16_t addr;
+  uint16_t data;
+  uint16_t cnt;
+  uint16_t num;
+};
+
+Modbus res_data;
+
+bool is_wait = false; //true면 request중, 아니면 대기중
+unsigned long req_t = 0;
+
+unsigned long main_t = 0;
+bool sw = false;
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  max3232.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  //큐의 사이즈를 결정한다!
+  q_init(&q, sizeof(Modbus), 10, FIFO, false);
+}
+void nockanda_write_single_coil_queue(byte id,uint16_t addr, uint16_t data){
+  if(q_getCount(&q) < 10){
+    Serial.println("FC5큐에 데이터를 넣습니다!");
+    Modbus mydata;
+    mydata.id = id;
+    mydata.fc = 5;
+    mydata.addr = addr;
+    mydata.data = data;
+    q_push(&q, &mydata); 
+  }else{
+    Serial.println("큐가 가득찼습니다");
+  }
+}
+void nockanda_read_coils_queue(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+  if(q_getCount(&q) < 10){
+    Serial.println("FC1큐에 데이터를 넣습니다!");
+    Modbus mydata;
+    mydata.id = id;
+    mydata.fc = 1;
+    mydata.addr = addr;
+    mydata.cnt = cnt;
+    mydata.num = num;
+    q_push(&q, &mydata); 
+  }else{
+    Serial.println("큐가 가득찼습니다");
+  }
+}
+void nockanda_read_hoding_register_queue(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+  if(q_getCount(&q) < 10){
+    Serial.println("FC3큐에 데이터를 넣습니다!");
+    Modbus mydata;
+    mydata.id = id;
+    mydata.fc = 3;
+    mydata.t = millis();
+    mydata.addr = addr;
+    mydata.cnt = cnt;
+    mydata.num = num;
+    q_push(&q, &mydata); 
+  }else{
+    Serial.println("큐가 가득찼습니다");
+  }
+}
+void nockanda_write_single_coil(byte id,uint16_t addr, uint16_t data){
+  //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+  byte req[] = {id,5,addr/256,addr%256,data/256,data%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+  //CRC 2바이트를 계산해야한다!
+  uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+ 
+  //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+  byte req_crc_high = req_crc/256;
+  byte req_crc_low = req_crc%256;
+
+  //순서에 맞게 8바이트를 전송한다!
+  max3232.write(req,6);
+  max3232.write(req_crc_low);
+  max3232.write(req_crc_high);
+
+}
+void nockanda_read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+  //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+  byte req[] = {id,1,addr/256,addr%256,cnt/256,cnt%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+  //CRC 2바이트를 계산해야한다!
+  uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+ 
+  //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+  byte req_crc_high = req_crc/256;
+  byte req_crc_low = req_crc%256;
+
+  //순서에 맞게 8바이트를 전송한다!
+  max3232.write(req,6);
+  max3232.write(req_crc_low);
+  max3232.write(req_crc_high);
+
+}
+void nockanda_read_hoding_register(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+  //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+  byte req[] = {id,3,addr/256,addr%256,cnt/256,cnt%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+  //CRC 2바이트를 계산해야한다!
+  uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+ 
+  //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+  byte req_crc_high = req_crc/256;
+  byte req_crc_low = req_crc%256;
+
+  //순서에 맞게 8바이트를 전송한다!
+  max3232.write(req,6);
+  max3232.write(req_crc_low);
+  max3232.write(req_crc_high);
+
+  
+}
+
+void loop() {
+  //대기열에 대기중인 데이터가 있으면 작업이 진행된다!
+  if(q_getCount(&q) > 0 && !is_wait){
+    //대기열에서 하나의 데이터를 뺸다
+    Serial.println("큐에서 데이터를 하나 뺍니다");
+    Modbus mydata;
+    q_pop(&q, &mydata); //제일 첫 데이터 뺴오기
+    if(mydata.fc == 3){
+      //레지스터 읽기
+      nockanda_read_hoding_register(mydata.id,mydata.addr,mydata.cnt,mydata.num);
+    }else if(mydata.fc == 5){
+      //코일쓰기
+      nockanda_write_single_coil(mydata.id,mydata.addr,mydata.data);
+    }else if(mydata.fc == 1){
+      //코일읽기(여러개)
+      nockanda_read_coils(mydata.id,mydata.addr,mydata.cnt,mydata.num);
+    }
+  
+    res_data.id = mydata.id;
+    res_data.fc = mydata.fc;
+    res_data.addr = mydata.addr;
+    res_data.data = mydata.data;
+    res_data.cnt = mydata.cnt;
+    res_data.num = mydata.num;
+    res_data.t = millis();
+    is_wait = true;
+  }
+  //현재 request중인 상태일경우+응답이 온경우
+  //응답을 수신하겠다!
+  if(is_wait){
+    //응답을 대기하는 상태
+    if(millis() - res_data.t > 500){
+      Serial.println("타임아웃 발생했습니다");
+      is_wait = false;
+    }
+    if(max3232.available()){
+      //펑션 코드에 따라서 대응을 달리한다!
+      if(res_data.fc == 5){
+        //write single coil
+        max3232.readBytes(res_buff,8);
+        Serial.print("FC=5, 응답 데이터 수신=");
+        for(int i = 0;i<8;i++){
+          Serial.print(res_buff[i],HEX);
+          Serial.print(", ");
+        }
+        Serial.println();
+      }else if(res_data.fc == 3){
+        //read register
+        uint16_t len = 5 + (2*res_data.cnt);
+        max3232.readBytes(res_buff,len);
+        if(res_data.num == 0x0000){
+          //데이터를 어떻게 해석할지는 요청한 주소에 따라서 달리한다!
+          Serial.print("FC=3, 응답 데이터 수신=");
+          for(int i = 0;i<len;i++){
+            Serial.print(res_buff[i],HEX);
+            Serial.print(", ");
+          }
+          Serial.println(res_buff[3]*256 + res_buff[4]); //12345
+        }else if(res_data.num == 0x0001){
+          //데이터를 어떻게 해석할지는 요청한 주소에 따라서 달리한다!
+          Serial.print("FC=3, 응답 데이터 수신=");
+          for(int i = 0;i<len;i++){
+            Serial.print(res_buff[i],HEX);
+            Serial.print(", ");
+          }
+          Serial.print(res_buff[3]*256 + res_buff[4]); //12345
+          int mynum = (res_buff[5] << 8) | res_buff[6]; 
+          Serial.print(",");
+          Serial.println(mynum); //-12345
+        }
+      }else if(res_data.fc == 1){
+        //read multiple coils
+        uint16_t len = 5 + (((res_data.cnt-1) / 8) + 1);
+        max3232.readBytes(res_buff,len);
+        if(res_data.num == 0x0000){
+          Serial.print("FC=1, 응답 데이터 수신=");
+          for(int i = 0;i<len;i++){
+            if(i == 3){
+              Serial.print(res_buff[i],BIN);
+            }else{
+              Serial.print(res_buff[i],HEX); 
+            }
+            Serial.print(", ");
+          }
+          Serial.println();
+        }else if(res_data.num == 0x0001){
+          Serial.print("FC=1, 응답 데이터 수신=");
+          for(int i = 0;i<len;i++){
+            if(i == 3 || i == 4){
+              Serial.print(res_buff[i],BIN);
+            }else{
+              Serial.print(res_buff[i],HEX); 
+            }
+            Serial.print(", ");
+          }
+          Serial.println();
+        }
+      }
+      is_wait = false;
+    }
+  }
+  if(millis() - main_t > 1000){
+    main_t = millis();
+    //1마스터가 슬레이브에게 request한다!
+    //내가 request중인데 또 request할수는 없다!    
+
+    //내가 보낼수 있을때 보낸다!
+    nockanda_read_hoding_register_queue(1,0x0000,0x0001,0x0000);//12345
+    //응답이 올때까지 얘는 못보낸다!
+    nockanda_read_hoding_register_queue(1,0x0000,0x0002,0x0001);//12345, -12345
+    if(sw){
+      nockanda_write_single_coil_queue(1,0x0000,0xFF00);
+      nockanda_write_single_coil_queue(1,0x0001,0x0000);
+      sw = !sw;
+    }else{
+      nockanda_write_single_coil_queue(1,0x0000,0x0000);
+      nockanda_write_single_coil_queue(1,0x0001,0xFF00);
+      sw = !sw;
+    }
+  }
+}
