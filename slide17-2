@@ -1,0 +1,88 @@
+#include <SoftwareSerial.h>
+#include "CRC16.h" //CRC라이브러리
+#include "CRC.h" //CRC라이브러리
+
+//MAX3232가 2번 3번핀에 연결되어있다!
+SoftwareSerial max3232(2,3);
+
+byte res_buff[50];
+
+struct{
+  byte fc;
+  unsigned long t;
+  uint16_t addr;
+  uint16_t data;
+}nockanda;
+
+bool is_wait = false; //true면 request중, 아니면 대기중
+unsigned long req_t = 0;
+
+unsigned long main_t = 0;
+bool sw = false;
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  max3232.begin(9600);//산업용 아두이노와 모드버스 RTU!
+}
+
+void nockanda_write_single_coil(byte id,uint16_t addr, uint16_t data){
+  if(!is_wait){
+  //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+  byte req[] = {id,5,addr/256,addr%256,data/256,data%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+  //CRC 2바이트를 계산해야한다!
+  uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+ 
+  //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+  byte req_crc_high = req_crc/256;
+  byte req_crc_low = req_crc%256;
+
+  //순서에 맞게 8바이트를 전송한다!
+  max3232.write(req,6);
+  max3232.write(req_crc_low);
+  max3232.write(req_crc_high);
+
+  nockanda.fc = 5;
+  nockanda.t = millis();
+  nockanda.addr = addr;
+  nockanda.data = data;
+  is_wait = true;
+}
+}
+
+void loop() {
+  //현재 request중인 상태일경우+응답이 온경우
+  //응답을 수신하겠다!
+  if(is_wait){
+    //응답을 대기하는 상태
+    if(millis() - nockanda.t > 500){
+      Serial.println("타임아웃 발생했습니다");
+      is_wait = false;
+    }
+    if(max3232.available()){
+      if(nockanda.fc == 5){
+        max3232.readBytes(res_buff,8);
+        Serial.print("응답 데이터 수신=");
+        for(int i = 0;i<8;i++){
+          Serial.print(res_buff[i],HEX);
+          Serial.print(", ");
+        }
+        Serial.println();
+      }
+      is_wait = false;
+    }
+  }
+  if(millis() - main_t > 1000){
+    main_t = millis();
+    //1마스터가 슬레이브에게 request한다!
+    //내가 request중인데 또 request할수는 없다!
+    if(sw){
+      nockanda_write_single_coil(1,0x0000,0xFF00); //ON
+      sw = !sw;  
+    }else{
+      nockanda_write_single_coil(1,0x0000,0x0000); //OFF
+      sw = !sw;  
+    }
+  }
+}
+
+
