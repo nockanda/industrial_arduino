@@ -1,0 +1,90 @@
+#include "nockanda.h"
+
+Nockanda_modbus nm(&Serial3);
+
+unsigned long main_t = 0;
+bool sw = false;
+
+union{
+  byte input[2];
+  int output;
+}myunion;
+
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  Serial.print("write single coil 완료함");
+}
+void write_multiple_coils(byte id,uint16_t addr,uint16_t cnt){
+  Serial.print("write multiple coils 완료함");
+}
+void write_single_register(byte id,uint16_t addr, uint16_t data){
+  Serial.print("write_single_register 완료함");
+}
+void read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data){
+  Serial.print("read_coils 완료함");
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.print("read_holding_register 완료함");
+}
+void read_input_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.print("read_input_register 완료함");
+  Serial.print(",id=");
+  Serial.print(id);
+  Serial.print(",");
+  //데이터가 3번 4번 바이트로 수신된다
+  if(num == 0x0000){
+    //온도는 signed int에 해당이 된다(int)
+    myunion.input[0] = data[4]; //LOW byte
+    myunion.input[1] = data[3]; //HIGH byte
+    float temp = myunion.output/10.0;
+    Serial.print("온도=");
+    Serial.print(temp);
+    Serial.println("'C");
+  }else if(num == 0x0001){
+    //습도가 응답으로 왔다!
+    myunion.input[0] = data[4]; //LOW byte
+    myunion.input[1] = data[3]; //HIGH byte
+    float humi = myunion.output/10.0;
+    Serial.print("습도=");
+    Serial.print(humi);
+    Serial.println("%");
+  }else if(num == 0x0002){
+    //온도+습도
+    myunion.input[0] = data[4]; //LOW byte
+    myunion.input[1] = data[3]; //HIGH byte
+    float temp = myunion.output/10.0;
+    myunion.input[0] = data[6]; //LOW byte
+    myunion.input[1] = data[5]; //HIGH byte
+    float humi = myunion.output/10.0;
+    Serial.print("온도=");
+    Serial.print(temp);
+    Serial.print("'C, ");
+    Serial.print("습도=");
+    Serial.print(humi);
+    Serial.println("%");
+  }
+}
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  nm.write_single_coil_cb = write_single_coil;
+  nm.read_holding_register_cb = read_holding_register;
+  nm.read_input_register_cb = read_input_register;
+  nm.read_coils_cb = read_coils;
+  nm.write_multiple_coils_cb = write_multiple_coils;
+  nm.write_single_register_cb=write_single_register;
+}
+void loop() {
+  nm.loop(); //녹칸다의 모드버스 기능을 동작시키는 부분
+  
+  if(millis() - main_t > 1000){
+    main_t = millis();
+    //1마스터가 슬레이브에게 request한다!
+    //내가 request중인데 또 request할수는 없다!    
+    nm.nockanda_read_input_register_queue(1,1,1,0x0000); //0x0000이면 온도값 요청하기
+    nm.nockanda_read_input_register_queue(1,2,1,0x0001); //0x0001이면 습도값 요청하기
+    nm.nockanda_read_input_register_queue(1,1,2,0x0002); //0x0002이면 온도+습도값 요청하기
+  }
+}
+
+
