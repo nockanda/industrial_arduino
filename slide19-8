@@ -1,0 +1,130 @@
+#include "nockanda.h"
+#include <MsTimer2.h>
+
+#define btn1 37 //빨강
+#define btn2 36 //녹색
+unsigned long btn1_t = 0;
+unsigned long btn2_t = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+
+Nockanda_modbus nm(&Serial3);
+
+unsigned long main_t = 0;
+bool sw = false;
+
+union{
+  byte input[2];
+  int output;
+}myunion;
+
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  Serial.println("write single coil 완료함");
+}
+void write_multiple_coils(byte id,uint16_t addr,uint16_t cnt){
+  Serial.println("write multiple coils 완료함");
+}
+void write_single_register(byte id,uint16_t addr, uint16_t data){
+  Serial.println("write_single_register 완료함");
+}
+void read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data){
+  Serial.println("read_coils 완료함");
+  //일단 정답은 0번과 2번이 동시에 on/off되는것이다!
+  //data[3] : 8채널 릴레이의 0~7채널의 정보가 들어있다!
+  //76543210 채널번호
+  //00000101 응답받는 비트
+  bool ch_state[8];
+  for(int i = 0;i<8;i++){
+    ch_state[i] = (data[3] >> i) & 0x01;
+
+    if(ch_state[i] == HIGH){
+      Serial.print(i);
+      Serial.println("채널이 On되었습니다");
+    }
+  }
+  
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.println("read_holding_register 완료함");
+}
+void read_input_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.println("read_input_register 완료함");
+}
+
+bool task1_run = false;
+int task1_counter = 0;
+
+void task(){
+  if(task1_run){
+    if(task1_counter == 0){
+      Serial.println("작업1 시작");
+      nm.nockanda_write_single_coil_queue(0xFF,6,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,7,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,0,0xFF00);
+      nm.nockanda_write_single_coil_queue(0xFF,1,0xFF00);
+    }else if(task1_counter == 4){
+      Serial.println("작업2 시작");
+      nm.nockanda_write_single_coil_queue(0xFF,0,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,1,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,2,0xFF00);
+      nm.nockanda_write_single_coil_queue(0xFF,3,0xFF00);
+    }else if(task1_counter == 6){
+      Serial.println("작업3 시작");
+      nm.nockanda_write_single_coil_queue(0xFF,2,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,3,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,4,0xFF00);
+      nm.nockanda_write_single_coil_queue(0xFF,5,0xFF00);
+    }else if(task1_counter == 12){
+      Serial.println("작업4 시작");
+      nm.nockanda_write_single_coil_queue(0xFF,4,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,5,0x0000);
+      nm.nockanda_write_single_coil_queue(0xFF,6,0xFF00);
+      nm.nockanda_write_single_coil_queue(0xFF,7,0xFF00);
+    }else if(task1_counter == 16){
+      task1_counter = -1;
+    }
+    task1_counter++;
+  }
+}
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  nm.write_single_coil_cb = write_single_coil;
+  nm.read_holding_register_cb = read_holding_register;
+  nm.read_input_register_cb = read_input_register;
+  nm.read_coils_cb = read_coils;
+  nm.write_multiple_coils_cb = write_multiple_coils;
+  nm.write_single_register_cb=write_single_register;
+  pinMode(btn1,INPUT);
+  pinMode(btn2,INPUT);
+  MsTimer2::set(500, task);
+  MsTimer2::start();
+}
+void loop() {
+  nm.loop(); //녹칸다의 모드버스 기능을 동작시키는 부분
+  bool now_btn1 = digitalRead(btn1);
+  bool now_btn2 = digitalRead(btn2);
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    btn1_t = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    if(millis() - btn1_t > 50){
+      //빨간버튼 pressed
+      task1_run = false;
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    btn2_t = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    if(millis() - btn2_t > 50){
+      //녹색버튼 pressed
+      task1_run = true;
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
+
+
