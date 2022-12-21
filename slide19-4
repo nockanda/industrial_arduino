@@ -1,0 +1,308 @@
+#include "CRC16.h" //CRC라이브러리
+#include "CRC.h" //CRC라이브러리
+#include <cQueue.h>
+
+class Nockanda_modbus{
+  private:
+    HardwareSerial *_Serial;
+    Queue_t    q;
+    byte res_buff[50];
+    struct Modbus{
+      byte id;
+      byte fc;
+      unsigned long t;
+      uint16_t addr;
+      uint16_t data;
+      uint16_t cnt;
+      uint16_t num;
+    };
+    Modbus res_data;
+    bool is_wait = false; //true면 request중, 아니면 대기중
+    unsigned long req_t = 0;
+
+    //private함수
+    void nockanda_write_single_coil(byte id,uint16_t addr, uint16_t data){
+      //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+      byte req[] = {id,5,addr/256,addr%256,data/256,data%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+      //CRC 2바이트를 계산해야한다!
+      uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+     
+      //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+    
+      //순서에 맞게 8바이트를 전송한다!
+      _Serial->write(req,6);
+      _Serial->write(req_crc_low);
+      _Serial->write(req_crc_high);
+    
+    }
+    void nockanda_read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+      //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+      byte req[] = {id,1,addr/256,addr%256,cnt/256,cnt%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+      //CRC 2바이트를 계산해야한다!
+      uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+     
+      //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+    
+      //순서에 맞게 8바이트를 전송한다!
+      _Serial->write(req,6);
+      _Serial->write(req_crc_low);
+      _Serial->write(req_crc_high);
+    
+    }
+    void nockanda_read_hoding_register(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+      //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+      byte req[] = {id,3,addr/256,addr%256,cnt/256,cnt%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+      //CRC 2바이트를 계산해야한다!
+      uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+     
+      //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+    
+      //순서에 맞게 8바이트를 전송한다!
+      _Serial->write(req,6);
+      _Serial->write(req_crc_low);
+      _Serial->write(req_crc_high);
+    }
+    
+    void nockanda_write_multiple_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t data){
+      //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+      //byte req[] = {id,15,addr/256,addr%256,cnt/256,cnt%256,2,data/256,data%256};
+      byte req[] = {id,15,addr/256,addr%256,cnt/256,cnt%256,data/256,data%256};
+      //CRC 2바이트를 계산해야한다!
+      uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+     
+      //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+    
+      //순서에 맞게 8바이트를 전송한다!
+      _Serial->write(req,8);
+      _Serial->write(req_crc_low);
+      _Serial->write(req_crc_high);
+    }
+    void nockanda_write_single_register(byte id,uint16_t addr, uint16_t data){
+      byte req[] = {id,6,addr/256,addr%256,data/256,data%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+      //CRC 2바이트를 계산해야한다!
+      uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+     
+      //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+    
+      //순서에 맞게 8바이트를 전송한다!
+      _Serial->write(req,6);
+      _Serial->write(req_crc_low);
+      _Serial->write(req_crc_high);
+    }
+    void nockanda_read_input_register(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+      //응답이 오기 전까지는 새로운 request를 전송하지 않겠다!
+      byte req[] = {id,4,addr/256,addr%256,cnt/256,cnt%256}; //4번째 바이트가 0xFF면 HIGH, 0x00이면 LOW
+      //CRC 2바이트를 계산해야한다!
+      uint16_t req_crc = crc16(req, sizeof(req), 0x8005, 0xFFFF, 0, true, true);
+     
+      //2바이트로 표현된 result값을 1byte씩 쪼개서 2byte로 나눠담는 과정~!
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+    
+      //순서에 맞게 8바이트를 전송한다!
+      _Serial->write(req,6);
+      _Serial->write(req_crc_low);
+      _Serial->write(req_crc_high);
+    }
+  public:
+    Nockanda_modbus(HardwareSerial * mySerial){
+      _Serial = mySerial;
+    }
+    begin(unsigned long baud){
+      _Serial->begin(baud);
+      //큐의 사이즈를 결정한다!
+      q_init(&q, sizeof(Modbus), 10, FIFO, false);
+    }
+    void (*write_single_coil_cb)(byte id,uint16_t addr,uint16_t data); 
+    void (*write_multiple_coils_cb)(byte id,uint16_t addr,uint16_t cnt);
+    void (*write_single_register_cb)(byte id,uint16_t addr, uint16_t data);
+    void (*read_coils_cb)(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data);
+    void (*read_holding_register_cb)(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num);
+    void (*read_input_register_cb)(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num);
+    
+    void nockanda_write_single_coil_queue(byte id,uint16_t addr, uint16_t data){
+      if(q_getCount(&q) < 10){
+        Serial.println("FC5큐에 데이터를 넣습니다!");
+        Modbus mydata;
+        mydata.id = id;
+        mydata.fc = 5;
+        mydata.addr = addr;
+        mydata.data = data;
+        q_push(&q, &mydata); 
+      }else{
+        Serial.println("큐가 가득찼습니다");
+      }
+    }
+    void nockanda_read_coils_queue(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+      if(q_getCount(&q) < 10){
+        Serial.println("FC1큐에 데이터를 넣습니다!");
+        Modbus mydata;
+        mydata.id = id;
+        mydata.fc = 1;
+        mydata.addr = addr;
+        mydata.cnt = cnt;
+        mydata.num = num;
+        q_push(&q, &mydata); 
+      }else{
+        Serial.println("큐가 가득찼습니다");
+      }
+    }
+    void nockanda_read_hoding_register_queue(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+      if(q_getCount(&q) < 10){
+        Serial.println("FC3큐에 데이터를 넣습니다!");
+        Modbus mydata;
+        mydata.id = id;
+        mydata.fc = 3;
+        mydata.t = millis();
+        mydata.addr = addr;
+        mydata.cnt = cnt;
+        mydata.num = num;
+        q_push(&q, &mydata); 
+      }else{
+        Serial.println("큐가 가득찼습니다");
+      }
+    }
+    void nockanda_write_multiple_coils_queue(byte id,uint16_t addr,uint16_t cnt,uint16_t data){
+      if(q_getCount(&q) < 10){
+        Serial.println("FC15큐에 데이터를 넣습니다!");
+        Modbus mydata;
+        mydata.id = id;
+        mydata.fc = 15;
+        mydata.t = millis();
+        mydata.addr = addr;
+        mydata.cnt = cnt;
+        mydata.data = data;
+        q_push(&q, &mydata); 
+      }else{
+        Serial.println("큐가 가득찼습니다");
+      }
+    }
+    void nockanda_write_single_register_queue(byte id,uint16_t addr, uint16_t data){
+      if(q_getCount(&q) < 10){
+        Serial.println("FC6큐에 데이터를 넣습니다!");
+        Modbus mydata;
+        mydata.id = id;
+        mydata.fc = 6;
+        mydata.t = millis();
+        mydata.addr = addr;
+        mydata.data = data;
+        q_push(&q, &mydata); 
+      }else{
+        Serial.println("큐가 가득찼습니다");
+      }
+    }
+    void nockanda_read_input_register_queue(byte id,uint16_t addr,uint16_t cnt,uint16_t num){
+      if(q_getCount(&q) < 10){
+        Serial.println("FC4큐에 데이터를 넣습니다!");
+        Modbus mydata;
+        mydata.id = id;
+        mydata.fc = 4;
+        mydata.t = millis();
+        mydata.addr = addr;
+        mydata.cnt = cnt;
+        mydata.num = num;
+        q_push(&q, &mydata); 
+      }else{
+        Serial.println("큐가 가득찼습니다");
+      }
+    }
+    void loop(){
+      //대기열에 대기중인 데이터가 있으면 작업이 진행된다!
+      if(q_getCount(&q) > 0 && !is_wait){
+        //대기열에서 하나의 데이터를 뺸다
+        Serial.println("큐에서 데이터를 하나 뺍니다");
+        Modbus mydata;
+        q_pop(&q, &mydata); //제일 첫 데이터 뺴오기
+        if(mydata.fc == 3){
+          //레지스터 읽기
+          nockanda_read_hoding_register(mydata.id,mydata.addr,mydata.cnt,mydata.num);
+        }else if(mydata.fc == 5){
+          //코일쓰기
+          nockanda_write_single_coil(mydata.id,mydata.addr,mydata.data);
+        }else if(mydata.fc == 1){
+          //코일읽기(여러개)
+          nockanda_read_coils(mydata.id,mydata.addr,mydata.cnt,mydata.num);
+        }else if(mydata.fc == 15){
+          //코일쓰기(여러개)
+          nockanda_write_multiple_coils(mydata.id,mydata.addr,mydata.cnt,mydata.data);
+        }else if(mydata.fc == 6){
+          //레지스터 쓰기(한개)
+          nockanda_write_single_register(mydata.id,mydata.addr,mydata.data);
+        }else if(mydata.fc == 4){
+          //레지스터 쓰기(한개)
+          nockanda_read_input_register(mydata.id,mydata.addr,mydata.cnt,mydata.num);
+        }
+      
+        res_data.id = mydata.id;
+        res_data.fc = mydata.fc;
+        res_data.addr = mydata.addr;
+        res_data.data = mydata.data;
+        res_data.cnt = mydata.cnt;
+        res_data.num = mydata.num;
+        res_data.t = millis();
+        is_wait = true;
+      }
+      //현재 request중인 상태일경우+응답이 온경우
+      //응답을 수신하겠다!
+      if(is_wait){
+        //응답을 대기하는 상태
+        if(millis() - res_data.t > 500){
+          Serial.println("타임아웃 발생했습니다");
+          is_wait = false;
+        }
+        if(_Serial->available()){
+          //펑션 코드에 따라서 대응을 달리한다!
+          if(res_data.fc == 5){
+            //write single coil
+            _Serial->readBytes(res_buff,8);
+            if(write_single_coil_cb != NULL){
+              write_single_coil_cb(res_data.id,res_data.addr,res_data.data);
+            }
+          }else if(res_data.fc == 3){
+            //read register
+            uint16_t len = 5 + (2*res_data.cnt);
+            _Serial->readBytes(res_buff,len);
+            if(read_holding_register_cb != NULL){
+              read_holding_register_cb(res_data.id,res_buff,3,2*res_data.cnt,res_data.num);
+            }
+          }else if(res_data.fc == 1){
+            //read multiple coils
+            uint16_t len = 5 + (((res_data.cnt-1) / 8) + 1);
+            _Serial->readBytes(res_buff,len);
+            if(read_coils_cb != NULL){
+              read_coils_cb(res_data.id,res_data.addr,res_data.cnt,res_data.num, res_buff);
+            }
+          }else if(res_data.fc == 15){
+            _Serial->readBytes(res_buff,8);
+            if(write_multiple_coils_cb != NULL){
+              uint16_t data = res_buff[4] * 256 + res_buff[5];
+              write_multiple_coils_cb(res_data.id,res_data.addr,res_data.cnt);
+            }
+          }else if(res_data.fc == 6){
+            _Serial->readBytes(res_buff,8);
+            if(write_single_register_cb != NULL){
+              write_single_register_cb(res_data.id,res_data.addr,res_data.data);
+            }
+          }else if(res_data.fc == 4){
+            //read register
+            uint16_t len = 5 + (2*res_data.cnt);
+            _Serial->readBytes(res_buff,len);
+            if(read_input_register_cb != NULL){
+              read_input_register_cb(res_data.id,res_buff,3,2*res_data.cnt,res_data.num);
+            }
+          }
+          is_wait = false;
+        }
+      }
+    }
+};
