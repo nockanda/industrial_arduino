@@ -1,0 +1,75 @@
+#include "nockanda.h"
+
+#define btn1 37 //빨강
+#define btn2 36 //녹색
+unsigned long btn1_t = 0;
+unsigned long btn2_t = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+
+Nockanda_modbus nm(&Serial3);
+
+unsigned long main_t = 0;
+bool sw = false;
+
+union{
+  byte input[2];
+  int output;
+}myunion;
+
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  Serial.print("write single coil 완료함");
+}
+void write_multiple_coils(byte id,uint16_t addr,uint16_t cnt){
+  Serial.print("write multiple coils 완료함");
+}
+void write_single_register(byte id,uint16_t addr, uint16_t data){
+  Serial.print("write_single_register 완료함");
+}
+void read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data){
+  Serial.print("read_coils 완료함");
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.print("read_holding_register 완료함");
+}
+void read_input_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.print("read_input_register 완료함");
+}
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  nm.write_single_coil_cb = write_single_coil;
+  nm.read_holding_register_cb = read_holding_register;
+  nm.read_input_register_cb = read_input_register;
+  nm.read_coils_cb = read_coils;
+  nm.write_multiple_coils_cb = write_multiple_coils;
+  nm.write_single_register_cb=write_single_register;
+  pinMode(btn1,INPUT);
+  pinMode(btn2,INPUT);
+}
+void loop() {
+  nm.loop(); //녹칸다의 모드버스 기능을 동작시키는 부분
+  bool now_btn1 = digitalRead(btn1);
+  bool now_btn2 = digitalRead(btn2);
+
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    btn1_t = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    if(millis() - btn1_t > 50){
+      //빨간버튼 pressed
+      nm.nockanda_write_single_coil_queue(0xFF,0,0x0000);
+    }
+  }
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    btn2_t = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    if(millis() - btn2_t > 50){
+      //녹색버튼 pressed
+      nm.nockanda_write_single_coil_queue(0xFF,0,0xFF00);
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+}
