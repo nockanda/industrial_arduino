@@ -1,0 +1,556 @@
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+#include <WebSocketsServer.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <Hash.h>
+#include <ArduinoJson.h>
+#include "nockanda.h"
+
+#define USE_SERIAL Serial
+
+ESP8266WiFiMulti WiFiMulti;
+
+//웹서버의 포트는 기본 포트인 80번을 사용한다!
+ESP8266WebServer server(80);
+//웹서버와 웹클라이언트가 뒷구멍으로 주고받는 데이터는 웹소켓에서 81번을 쓴다!
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+//RX를 D3에 연결, Tx를 D4
+SoftwareSerial max3232(D3,D4);
+Nockanda_modbus nm(&max3232);
+
+union{
+  byte input[2];
+  int output;
+}myunion;
+
+String response = "\
+<html>\
+<head>\
+<meta name=\"viewport\" content=\"width=device-width\">\
+<meta charset=\"utf-8\">\
+<script>\
+  var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);\
+  connection.onopen = function () {\
+  };\
+  connection.onerror = function (error) {\
+     console.log('WebSocket Error ', error);\
+  };\
+  connection.onmessage = function (e) {\
+     var recv = JSON.parse(e.data);\
+     if(recv.fc == 1){\
+        if(recv.output[0] == 0){\
+           document.getElementById('coil0_off').style.backgroundColor = 'red';\
+           document.getElementById('coil0_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil0_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil0_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[1] == 0){\
+           document.getElementById('coil1_off').style.backgroundColor = 'red';\
+           document.getElementById('coil1_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil1_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil1_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[2] == 0){\
+           document.getElementById('coil2_off').style.backgroundColor = 'red';\
+           document.getElementById('coil2_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil2_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil2_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[3] == 0){\
+           document.getElementById('coil3_off').style.backgroundColor = 'red';\
+           document.getElementById('coil3_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil3_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil3_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[4] == 0){\
+           document.getElementById('coil4_off').style.backgroundColor = 'red';\
+           document.getElementById('coil4_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil4_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil4_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[5] == 0){\
+           document.getElementById('coil5_off').style.backgroundColor = 'red';\
+           document.getElementById('coil5_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil5_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil5_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[6] == 0){\
+           document.getElementById('coil6_off').style.backgroundColor = 'red';\
+           document.getElementById('coil6_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil6_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil6_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[7] == 0){\
+           document.getElementById('coil7_off').style.backgroundColor = 'red';\
+           document.getElementById('coil7_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil7_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil7_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[8] == 0){\
+           document.getElementById('coil8_off').style.backgroundColor = 'red';\
+           document.getElementById('coil8_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil8_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil8_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[9] == 0){\
+           document.getElementById('coil9_off').style.backgroundColor = 'red';\
+           document.getElementById('coil9_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil9_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil9_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[10] == 0){\
+           document.getElementById('coil10_off').style.backgroundColor = 'red';\
+           document.getElementById('coil10_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil10_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil10_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[11] == 0){\
+           document.getElementById('coil11_off').style.backgroundColor = 'red';\
+           document.getElementById('coil11_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil11_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil11_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[12] == 0){\
+           document.getElementById('coil12_off').style.backgroundColor = 'red';\
+           document.getElementById('coil12_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil12_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil12_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.output[13] == 0){\
+           document.getElementById('coil13_off').style.backgroundColor = 'red';\
+           document.getElementById('coil13_on').style.backgroundColor = 'grey';\
+        }else{\
+           document.getElementById('coil13_off').style.backgroundColor = 'grey';\
+           document.getElementById('coil13_on').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[0] == 0){\
+          document.getElementById('coil_16').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_16').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[1] == 0){\
+          document.getElementById('coil_17').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_17').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[2] == 0){\
+          document.getElementById('coil_18').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_18').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[3] == 0){\
+          document.getElementById('coil_19').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_19').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[4] == 0){\
+          document.getElementById('coil_20').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_20').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[5] == 0){\
+          document.getElementById('coil_21').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_21').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[6] == 0){\
+          document.getElementById('coil_22').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_22').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[7] == 0){\
+          document.getElementById('coil_23').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_23').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[8] == 0){\
+          document.getElementById('coil_24').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_24').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[9] == 0){\
+          document.getElementById('coil_25').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_25').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[10] == 0){\
+          document.getElementById('coil_26').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_26').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[11] == 0){\
+          document.getElementById('coil_27').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_27').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[12] == 0){\
+          document.getElementById('coil_28').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_28').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[13] == 0){\
+          document.getElementById('coil_29').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_29').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[14] == 0){\
+          document.getElementById('coil_30').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_30').style.backgroundColor = 'green';\
+        }\
+        if(recv.input[15] == 0){\
+          document.getElementById('coil_31').style.backgroundColor = 'red';\
+        }else{\
+          document.getElementById('coil_31').style.backgroundColor = 'green';\
+        }\
+     }else if(recv.fc == 3){\
+       if(recv.num == 0){\
+          console.log(recv.data[0]);\
+          document.getElementById('register').value += recv.data[0] + '\\n';\
+       }\
+     }\
+  };\
+  function write_single_coil(coil,sw){\
+     var data = {\
+         fc:5,\
+         coil:coil,\
+         sw:sw\
+     };\
+     connection.send(JSON.stringify(data));\
+  }\
+</script>\
+</head>\
+<body>\
+녹칸다의 1번 예제입니다!<BR>\
+<table border=1 width=600>\
+<tr><td>\
+<table border=1 width=400>\
+  <tr align=center>\
+     <td><input type=button id=coil0_off value=0번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(0,0)></td>\
+     <td><input type=button id=coil0_on value=0번ON style=\"height:50px;width:100px\" onClick=write_single_coil(0,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil1_off value=1번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(1,0)></td>\
+     <td><input type=button id=coil1_on value=1번ON style=\"height:50px;width:100px\" onClick=write_single_coil(1,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil2_off value=2번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(2,0)></td>\
+     <td><input type=button id=coil2_on value=2번ON style=\"height:50px;width:100px\" onClick=write_single_coil(2,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil3_off value=3번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(3,0)></td>\
+     <td><input type=button id=coil3_on value=3번ON style=\"height:50px;width:100px\" onClick=write_single_coil(3,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil4_off value=4번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(4,0)></td>\
+     <td><input type=button id=coil4_on value=4번ON style=\"height:50px;width:100px\" onClick=write_single_coil(4,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil5_off value=5번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(5,0)></td>\
+     <td><input type=button id=coil5_on value=5번ON style=\"height:50px;width:100px\" onClick=write_single_coil(5,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil6_off value=6번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(6,0)></td>\
+     <td><input type=button id=coil6_on value=6번ON style=\"height:50px;width:100px\" onClick=write_single_coil(6,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil7_off value=7번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(7,0)></td>\
+     <td><input type=button id=coil7_on value=7번ON style=\"height:50px;width:100px\" onClick=write_single_coil(7,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil8_off value=8번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(8,0)></td>\
+     <td><input type=button id=coil8_on value=8번ON style=\"height:50px;width:100px\" onClick=write_single_coil(8,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil9_off value=9번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(9,0)></td>\
+     <td><input type=button id=coil9_on value=9번ON style=\"height:50px;width:100px\" onClick=write_single_coil(9,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil10_off value=10번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(10,0)></td>\
+     <td><input type=button id=coil10_on value=0번ON style=\"height:50px;width:100px\" onClick=write_single_coil(10,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil11_off value=11번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(11,0)></td>\
+     <td><input type=button id=coil11_on value=11번ON style=\"height:50px;width:100px\" onClick=write_single_coil(11,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil12_off value=12번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(12,0)></td>\
+     <td><input type=button id=coil12_on value=12번ON style=\"height:50px;width:100px\" onClick=write_single_coil(12,1)></td>\
+  </tr>\
+  <tr align=center>\
+     <td><input type=button id=coil13_off value=13번OFF style=\"height:50px;width:100px\" onClick=write_single_coil(13,0)></td>\
+     <td><input type=button id=coil13_on value=13번ON style=\"height:50px;width:100px\" onClick=write_single_coil(13,1)></td>\
+  </tr>\
+</table>\
+</td>\
+<td>\
+<table border=1 width=200>\
+  <tr align=center>\
+     <td id=coil_16>22번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_17>23번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_18>24번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_19>25번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_20>26번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_21>27번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_22>28번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_23>29번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_24>30번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_25>31번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_26>32번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_27>33번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_28>34번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_29>35번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_30>36번</td>\
+  </tr>\
+  <tr align=center>\
+     <td id=coil_31>37번</td>\
+  </tr>\
+</table>\
+</td><td><textarea id=register cols=100 rows=15></textarea></td>\
+</tr></table>\
+</body>\
+</html>";
+
+
+//클라이언트에서 서버쪽으로 값이 전송되었을때 뭘할거냐?
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+
+    switch(type) {
+        case WStype_DISCONNECTED:
+            USE_SERIAL.printf("[%u] Disconnected!\n", num);
+            break;
+        case WStype_CONNECTED: {
+            IPAddress ip = webSocket.remoteIP(num);
+            USE_SERIAL.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+
+            //num = 소켓번호(클라이언트번호)
+            //webSocket.sendTXT(num, "Connected");
+        }
+            break;
+        case WStype_TEXT:
+        //메시지 수신부
+        //웹소켓 클라이언트가 웹소켓 서버로 전송하는 지점
+            USE_SERIAL.printf("[%u] get Text: %s\n", num, payload);
+            String myjson = "";
+            for(int i = 0;i<length;i++){
+              myjson += (char)payload[i];
+            }
+            //{"fc":5,"coil":0,"sw":1}
+            StaticJsonDocument<200> doc;
+            DeserializationError error = deserializeJson(doc, myjson);
+            
+            if (error) {
+              Serial.print(F("deserializeJson() failed: "));
+              Serial.println(error.f_str());
+              return;
+            }
+            
+            int fc = doc["fc"]; // 5
+            if(fc == 5){
+              int coil = doc["coil"]; // 0
+              int sw = doc["sw"]; // 1
+              if(sw == 0){
+                nm.nockanda_write_single_coil_queue(1,coil,0x0000);
+              }else{
+                nm.nockanda_write_single_coil_queue(1,coil,0xFF00);
+              }
+            }
+            break;
+    }
+
+}
+
+
+
+unsigned long main_t = 0;
+bool sw = false;
+
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  Serial.print(addr,HEX);
+  Serial.print(",");
+  Serial.print(data,HEX);
+  Serial.print(",");
+  Serial.println("write single coil 완료함");
+}
+void write_multiple_coils(byte id,uint16_t addr,uint16_t cnt){
+  Serial.println("write multiple coils 완료함");
+}
+void write_single_register(byte id,uint16_t addr, uint16_t data){
+  Serial.println("write_single_register 완료함");
+}
+void read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data){
+  Serial.print("read_coils 완료함");
+  //각 coil번호에 맞는 형태로 
+  bool output_state[14];
+  bool input_state[16];
+  for(int i =0;i<8;i++){
+    output_state[i] = bitRead(data[3], i);
+  }
+  for(int i =0;i<6;i++){
+    output_state[8+i] = bitRead(data[4], i);
+  }
+  for(int i = 0;i<8;i++){
+    input_state[i] = bitRead(data[5], i);
+  }
+  for(int i = 0;i<8;i++){
+    input_state[8+i] = bitRead(data[6], i);
+  }
+  //{"fc":1,"data":[0,1,0,1]}
+  String myjson = "{\"fc\":1,\"output\":[";
+  for(int i =0;i<13;i++){
+    myjson += String(output_state[i]) + ",";
+  }
+  myjson += String(output_state[13]) + "],\"input\":[";
+  for(int i=0;i<15;i++){
+    myjson += String(input_state[i]) + ",";
+  }
+  myjson += String(input_state[15]) + "]}";
+  //Serial.println(myjson);
+  webSocket.broadcastTXT(myjson);
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.println("read_holding_register 완료함");
+  //{"fc":3,"num":0,"data":[]}
+  if(num == 0x0000){
+    myunion.input[0] = data[4];
+    myunion.input[1] = data[3];
+    String myjson = "{\"fc\":3,\"num\":";
+    myjson += String(num);
+    myjson += ",\"data\":[";
+    myjson += String(myunion.output);
+    myjson += "]}";
+    webSocket.broadcastTXT(myjson);
+  }
+}
+void read_input_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.println("read_input_register 완료함");
+}
+
+void setup() {
+    //USE_SERIAL.begin(921600);
+    USE_SERIAL.begin(115200);
+    nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+    nm.write_single_coil_cb = write_single_coil;
+    nm.read_holding_register_cb = read_holding_register;
+    nm.read_input_register_cb = read_input_register;
+    nm.read_coils_cb = read_coils;
+    nm.write_multiple_coils_cb = write_multiple_coils;
+    nm.write_single_register_cb=write_single_register;
+    
+    //USE_SERIAL.setDebugOutput(true);
+
+    USE_SERIAL.println();
+    USE_SERIAL.println();
+    USE_SERIAL.println();
+
+    for(uint8_t t = 4; t > 0; t--) {
+        USE_SERIAL.printf("[SETUP] BOOT WAIT %d...\n", t);
+        USE_SERIAL.flush();
+        delay(1000);
+    }
+
+    //자기자신의 IP공유기 ID비밀번호 집어넣는곳!
+    WiFiMulti.addAP("popcorn", "11213144");
+
+    while(WiFiMulti.run() != WL_CONNECTED) {
+        delay(100);
+    }
+
+    //IP공유기로부터 할당받은 IP주소를 여기서 출력한다!
+    USE_SERIAL.println("IP address: ");
+    USE_SERIAL.println(WiFi.localIP());
+  
+    //웹소켓 서버를 연다
+    webSocket.begin();
+    webSocket.onEvent(webSocketEvent);
+
+    //윈도우10, 안드로이드 안됨..의미없는 기능
+    if(MDNS.begin("esp8266")) {
+        USE_SERIAL.println("MDNS responder started");
+    }
+
+    //웹서버의 index.html
+    //웹서버가 클라이언트에게 response해주는 부분!
+
+    server.on("/", []() {
+        server.send(200, "text/html", response);
+    });
+
+    server.begin();
+
+    // Add service to MDNS
+    MDNS.addService("http", "tcp", 80);
+    MDNS.addService("ws", "tcp", 81);
+}
+
+unsigned long last_10sec = 0;
+unsigned int counter = 0;
+
+void loop() {
+    unsigned long t = millis();
+    webSocket.loop(); //이거 있어야한다!
+    server.handleClient(); //이거도 있어야한다!
+    nm.loop();
+    if(millis() - main_t > 1000){
+      main_t = millis();
+      //nockanda_read_coils(mydata.id,mydata.addr,mydata.cnt,mydata.num);
+      nm.nockanda_read_coils_queue(1,0,32,0x0000);
+      nm.nockanda_read_hoding_register_queue(1,0,1,0x0000);
+    }
+    /*
+    //delay(~~~~) 절때 쓰면 안됨!
+
+    //10초간격으로 뭔가 하겠다~
+    if((t - last_10sec) > 1000) {
+      last_10sec = millis();
+      String msg = "현재 사물인터넷보드의 시간="+String(millis());
+      webSocket.broadcastTXT(msg); //모든클라이언트에게 메시지 전송!
+        
+    }
+    */
+}
+
