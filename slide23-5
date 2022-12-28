@@ -1,0 +1,136 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+#include <MsTimer2.h>
+
+uint16_t au16data[16]; //레지스터 주소가(0~15)
+uint8_t au8data[10]; //코일 (0~79)
+
+
+void task(){
+  if(read_coil(au8data,32) == HIGH){
+    //코일을 읽어보니 task1이 작동을 해야하는구나~
+    if(read_int16_reg(au16data,0) == 0){
+      //램프 ON
+      write_coil(au8data,0,HIGH);
+    }else if(read_int16_reg(au16data,0) == 2){
+      //램프 OFF
+      write_coil(au8data,0,LOW);
+    }else if(read_int16_reg(au16data,0) == 4){
+      //카운터에 -1을 대입
+      write_int16_reg(au16data,0,-1);
+    }
+
+    //task1카운터가 1씩 증가
+    int16_t temp = read_int16_reg(au16data,0);
+    temp = temp + 1;
+    write_int16_reg(au16data,0,temp);
+  }
+}
+
+//여기서부터
+union{
+  uint16_t t[2];
+  float f;
+}myfloat;
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+void write_uint16_reg(uint16_t * data,uint16_t addr,uint16_t value){
+  data[addr] = value;
+}
+uint16_t read_uint16_reg(uint16_t * data,uint16_t addr){
+  return data[addr];
+}
+void write_int16_reg(uint16_t * data,uint16_t addr,int16_t value){
+  data[addr] = value;
+}  
+int16_t read_int16_reg(uint16_t * data,int16_t addr){
+  return data[addr];
+}  
+void write_uint32_reg(uint16_t * data,uint16_t addr,uint32_t value){
+  data[addr] = value >> 16;
+  data[addr+1] = value & 0xFFFF;
+}
+uint32_t read_uint32_reg(uint16_t * data,uint16_t addr){
+  uint32_t output = 0;
+  output = data[addr];
+  output = output << 16;
+  output = output | data[addr+1];
+  return output;
+}
+void write_int32_reg(uint16_t * data,uint16_t addr,int32_t value){
+  data[addr] = value >> 16;
+  data[addr+1] = value & 0xFFFF;
+}
+int32_t read_int32_reg(uint16_t * data,uint16_t addr){
+  int32_t output = 0;
+  output = data[addr];
+  output = output << 16;
+  output = output | data[addr+1];
+  return output;
+}
+void write_float_reg(uint16_t * data,uint16_t addr,float value){
+  myfloat.f = value;
+  data[addr] = myfloat.t[0];
+  data[addr+1]= myfloat.t[1];
+}
+
+float read_float_reg(uint16_t * data,uint16_t addr){
+  myfloat.t[0] = data[addr];
+  myfloat.t[1] = data[addr+1];
+  return myfloat.f;
+}
+//여기까지는 레지스터 읽고 쓰기 위한 함수
+void setup() {
+  //모든 출력포트를 출력으로 설정하겠다!
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  //모든 입력포트를 입력으로 설정하겠다!
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+   usart3init(9600); //RS232포트중 채널1번에 모드버스 프로토콜을 사용한다!
+   //내가 희망하는 슬레이브주소(1), 레지스터(0~15), 코일(0~79)
+   startSimpleModbus(1,au16data, au8data); 
+   au16data[0] = 0; //주소0
+   au16data[1] = -12345; //주소1
+   MsTimer2::set(500, task); // 500ms period
+   MsTimer2::start();
+}
+void loop() {
+  //여기서부터
+  for(byte n=0; n<8; n++){
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+  for(byte n=0; n<8; n++){
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+  //여기까지는 산업용 아두이노가 스스로 레지스터맵을 업데이트 하는 부분
+
+  //빨간버튼을 누르면 33번코일을 OFF한다 녹색버튼을 누르면 33번코일을 ON한다!
+  if(read_coil(au8data,30) == HIGH){
+    //녹색버튼이 눌려졌다!
+    write_coil(au8data,32,HIGH);
+  }
+  if(read_coil(au8data,31) == HIGH){
+    //적색버튼이 눌려졌다!
+    write_coil(au8data,32,LOW);
+  }
+  
+}
+
+
+
