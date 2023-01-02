@@ -1,0 +1,55 @@
+#define red_btn 37 //INPUT
+#define green_btn 36 //INPUT
+#define relay 38 //OUTPUT
+
+class nockanda_debouce{
+  private:
+    int _pin;
+    bool old_btn = LOW;
+    unsigned long btn_t = 0;
+  public:
+    void (*callback)();
+    nockanda_debouce(int pin){
+      _pin = pin;
+      pinMode(_pin,INPUT);
+    }
+    void handle(){
+      bool now_btn = digitalRead(_pin);
+      if(old_btn == LOW && now_btn == HIGH){
+        btn_t = millis();
+      }else if(old_btn == HIGH && now_btn == LOW){
+        if(millis() - btn_t > 50){
+          if(callback != NULL){
+            callback();
+          }
+        }
+      }
+      old_btn = now_btn;
+    }
+};
+
+
+nockanda_debouce btn1(37);
+nockanda_debouce btn2(36);
+
+void red_btn_pressed(){
+  digitalWrite(relay,LOW);
+}
+void green_btn_pressed(){
+  digitalWrite(relay,HIGH);
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(relay,OUTPUT);
+  btn1.callback = red_btn_pressed;
+  btn2.callback = green_btn_pressed;
+}
+
+
+void loop() {
+  btn1.handle();
+  btn2.handle();
+}
+
+
