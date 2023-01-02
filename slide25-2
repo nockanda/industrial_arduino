@@ -1,0 +1,23 @@
+#define red_btn 37 //INPUT
+#define relay 38 //OUTPUT
+
+bool old_btn = LOW;
+unsigned long btn_t = 0;
+
+void setup() {
+  pinMode(red_btn,INPUT);
+  pinMode(relay,OUTPUT);
+}
+
+void loop() {
+  bool now_btn = digitalRead(red_btn);
+  if(old_btn == LOW && now_btn == HIGH){
+    btn_t = millis();
+  }else if(old_btn == HIGH && now_btn == LOW){
+    if(millis() - btn_t > 50){
+      digitalWrite(relay,!digitalRead(relay));
+    }
+  }
+  old_btn = now_btn;
+}
+
