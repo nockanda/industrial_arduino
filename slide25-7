@@ -1,0 +1,66 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+
+//산업용 아두이노에서 메모리를 초과하지 않는 선에서 내가 원하는 만큼 메모리를 할당하면된다!
+//unisgned int
+uint16_t au16data[16]; //레지스터 주소가(0~15)
+//byte
+//8bit짜리 자료형이 10개배열로 있으므로 80개의 주소가 있다!
+uint8_t au8data[10]; //코일 (0~79)
+
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+
+void setup() {
+  //모든 출력포트를 출력으로 설정하겠다!
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  //모든 입력포트를 입력으로 설정하겠다!
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+   usart3init(9600); //RS232포트중 채널1번에 모드버스 프로토콜을 사용한다!
+   //내가 희망하는 슬레이브주소(1), 레지스터(0~15), 코일(0~79)
+   startSimpleModbus(2,au16data, au8data); 
+}
+void loop() {
+  //write coil은 0~13
+  //출력포트가 14개이기 때문에 반복문이 14회 회전한다!
+  for(byte n=0; n<8; n++){
+    //38~45번핀까지의 디지털 상태를 설정한다!
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    //46~51번핀까지의 디지털 상태를 설정한다! ..14와 15은 아직 할당 안됨!
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+
+  //read coil은 16~31범위의 주소를 가진다!
+  //입력포트가 16개이기 때문에 반복문이 16회 회전한다!
+  for(byte n=0; n<8; n++){
+    //22~29
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    //30~37
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+
+  if(read_coil(au8data,30) == HIGH){
+    write_coil(au8data,0,HIGH);
+  }
+  if(read_coil(au8data,31) == HIGH){
+    write_coil(au8data,0,LOW);
+  }
+}
+
+
+
