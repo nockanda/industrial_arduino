@@ -1,0 +1,59 @@
+#define red_btn 37 //INPUT
+#define green_btn 36 //INPUT
+#define relay 38 //OUTPUT
+
+bool old_btn1 = LOW;
+unsigned long btn1_t = 0;
+bool old_btn2 = LOW;
+unsigned long btn2_t = 0;
+
+int mymode = 0; //1이면 빨간버튼이 눌려짐, 2면 녹색버튼이 눌려짐
+unsigned long mymode_t = 0;
+
+void setup() {
+  pinMode(red_btn,INPUT);
+  pinMode(green_btn,INPUT);
+  pinMode(relay,OUTPUT);
+}
+
+void loop() {
+  if(mymode != 0){
+    if(mymode == 1){
+      if(millis() - mymode_t > 3000){
+        digitalWrite(relay,LOW);
+        mymode = 0;
+      }
+    }else if(mymode == 2){
+      if(millis() - mymode_t > 5000){
+        digitalWrite(relay,LOW);
+        mymode = 0;
+      }
+    }
+  }
+  
+  bool now_btn1 = digitalRead(red_btn);
+  if(old_btn1 == LOW && now_btn1 == HIGH){
+    btn1_t = millis();
+  }else if(old_btn1 == HIGH && now_btn1 == LOW){
+    if(millis() - btn1_t > 50){
+      digitalWrite(relay,HIGH);
+      mymode = 1;
+      mymode_t = millis();
+    }
+  }
+  old_btn1 = now_btn1;
+
+  bool now_btn2 = digitalRead(green_btn);
+  if(old_btn2 == LOW && now_btn2 == HIGH){
+    btn2_t = millis();
+  }else if(old_btn2 == HIGH && now_btn2 == LOW){
+    if(millis() - btn2_t > 50){
+      digitalWrite(relay,HIGH);
+      mymode = 2;
+      mymode_t = millis();
+    }
+  }
+  old_btn2 = now_btn2;
+}
+
+
