@@ -1,0 +1,19 @@
+#define red_btn 37 //INPUT
+#define green_btn 36 //INPUT
+#define relay 38 //OUTPUT
+
+void setup() {
+  pinMode(red_btn,INPUT);
+  pinMode(green_btn,INPUT);
+  pinMode(relay,OUTPUT);
+}
+
+void loop() {
+  //버튼이 뭐가 눌려졌냐?
+  if(digitalRead(red_btn) == HIGH){
+    digitalWrite(relay,LOW); //OFF
+  }
+  if(digitalRead(green_btn) == HIGH){
+    digitalWrite(relay,HIGH); //ON
+  }
+}
