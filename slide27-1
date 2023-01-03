@@ -1,0 +1,33 @@
+//빨강(37), 노랑(36), 녹색(35)
+//릴레이가 각각 38, 39
+//일때 빨강을 누르면 역회전, 녹색을 누르면 정회전, 노랑을 누르면 멈춤
+
+#define btn_forward 37
+#define btn_stop 36
+#define btn_backward 35
+#define relay1 38
+#define relay2 39
+
+void setup() {
+  pinMode(btn_forward,INPUT); //빨강
+  pinMode(btn_stop,INPUT); //노랑
+  pinMode(btn_backward,INPUT); //녹색
+  pinMode(relay1,OUTPUT); //릴레이1
+  pinMode(relay2,OUTPUT); //릴레이2
+}
+
+void loop() {
+  if(digitalRead(btn_forward) == HIGH){
+    digitalWrite(relay1,HIGH);
+    digitalWrite(relay2,LOW);
+  }
+  if(digitalRead(btn_stop) == HIGH){
+    digitalWrite(relay1,LOW);
+    digitalWrite(relay2,LOW);
+  }
+  if(digitalRead(btn_backward) == HIGH){
+    digitalWrite(relay1,LOW);
+    digitalWrite(relay2,HIGH);
+  }
+}
+
