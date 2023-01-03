@@ -1,0 +1,115 @@
+//녹칸다의 개폐기는 완전닫힘에서 완전열림까지 25(+-1)초가 소요된다
+//산업용 아두이노가 끝지점을 인지할 수 있도록 하시오!
+//역회전으로 계속 돌려서 리미트 스위치에 걸린 지점을 0이라고 가정한다!
+#include <MsTimer2.h>
+
+#define btn_forward 37
+#define btn_stop 36
+#define btn_backward 35
+#define relay1 38
+#define relay2 39
+#define max_counter 270
+
+int task_counter = 0;
+int direct = 0; //0이면 멈춤, 1이면 정회전, 2이면 역회전
+bool auto_mode = false; //true면 자동모드 아니면 수동모드
+int target_counter = 0;
+
+//완전열림상태이거나 완전닫힘상태에 도달한것으로 계산으로 멈추기!
+void task(){
+  if(auto_mode){
+    if(task_counter < target_counter){
+      Serial.print("자동정회전=");
+      Serial.println(task_counter);
+      digitalWrite(relay1,LOW);
+      digitalWrite(relay2,HIGH);
+      task_counter++;
+    }else if(task_counter > target_counter){
+      Serial.print("자동역회전=");
+      Serial.println(task_counter);
+      digitalWrite(relay1,HIGH);
+      digitalWrite(relay2,LOW);
+      task_counter--;
+    }else{
+      digitalWrite(relay1,LOW);
+      digitalWrite(relay2,LOW);
+    }
+  }else{
+    if(direct == 1){
+      //정회전
+      task_counter++; 
+      Serial.print("정회전=");
+      Serial.println(task_counter);
+      if(task_counter >= max_counter){
+        Serial.println("정회전 완료 멈춤!");
+        direct = 0;
+        digitalWrite(relay1,LOW);
+        digitalWrite(relay2,LOW);
+      }
+    }else if(direct == 2){
+      //역회전
+      task_counter--;
+      Serial.print("역회전=");
+      Serial.println(task_counter);
+      if(task_counter <= 0){
+        Serial.println("역회전 완료 멈춤!");
+        direct = 0;
+        digitalWrite(relay1,LOW);
+        digitalWrite(relay2,LOW);
+      }
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(btn_forward,INPUT); //빨강
+  pinMode(btn_stop,INPUT); //노랑
+  pinMode(btn_backward,INPUT); //녹색
+  pinMode(relay1,OUTPUT); //릴레이1
+  pinMode(relay2,OUTPUT); //릴레이2
+  
+  MsTimer2::set(100, task);
+  MsTimer2::start();
+}
+
+void loop() {
+  if(Serial.available()){
+    char c = Serial.read();
+    if(c == '0'){
+      //0 
+      auto_mode = true;
+      target_counter = 0;
+    }else if(c == '1'){
+      //135
+      auto_mode = true;
+      target_counter = 135;
+    }else if(c == '2'){
+      //270
+      auto_mode = true;
+      target_counter = 270;
+    }else if(c == '3'){
+      Serial.print("현재 counter=");
+      Serial.println(task_counter);
+    }
+  }
+  if(digitalRead(btn_forward) == HIGH){
+    digitalWrite(relay1,HIGH);
+    digitalWrite(relay2,LOW);
+    direct = 2;
+    auto_mode = false;
+  }
+  if(digitalRead(btn_stop) == HIGH){
+    digitalWrite(relay1,LOW);
+    digitalWrite(relay2,LOW);
+    direct = 0;
+    auto_mode = false;
+  }
+  if(digitalRead(btn_backward) == HIGH){
+    digitalWrite(relay1,LOW);
+    digitalWrite(relay2,HIGH);
+    direct = 1;
+    auto_mode = false;
+  }
+}
+
