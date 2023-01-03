@@ -1,0 +1,129 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+#include <MsTimer2.h>
+
+//산업용 아두이노에서 메모리를 초과하지 않는 선에서 내가 원하는 만큼 메모리를 할당하면된다!
+//unisgned int
+uint16_t au16data[16]; //레지스터 주소가(0~15)
+//byte
+//8bit짜리 자료형이 10개배열로 있으므로 80개의 주소가 있다!
+uint8_t au8data[10]; //코일 (0~79)
+
+//int task_counter = 0;
+//int direct = 0; //0이면 멈춤, 1이면 정회전, 2이면 역회전
+bool auto_mode = false; //true면 자동모드 아니면 수동모드
+//int target_counter = 0;
+
+//완전열림상태이거나 완전닫힘상태에 도달한것으로 계산으로 멈추기!
+void task(){
+  if(read_coil(au8data,32)){
+    if(au16data[0] < au16data[1]){
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,HIGH);
+      au16data[0]++;
+    }else if(au16data[0] > au16data[1]){
+      write_coil(au8data,0,HIGH);
+      write_coil(au8data,1,LOW);
+      au16data[0]--;
+    }else{
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,LOW);
+    }
+  }else{
+    if(au16data[2] == 1){
+      //정회전
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,HIGH);
+      if(au16data[0] >= au16data[3]){
+        au16data[2] = 0;
+        write_coil(au8data,0,LOW);
+        write_coil(au8data,1,LOW);
+      }else{
+        au16data[0]++; 
+      }
+    }else if(au16data[2] == 2){
+      //역회전
+      write_coil(au8data,0,HIGH);
+      write_coil(au8data,1,LOW);
+      if(au16data[0] <= 0){
+        au16data[2] = 0;
+        write_coil(au8data,0,LOW);
+        write_coil(au8data,1,LOW);
+      }else{
+        au16data[0]--;  
+      }
+    }else if(au16data[2] == 0){
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,LOW);
+    }
+  }
+}
+
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+
+void setup() {
+  //모든 출력포트를 출력으로 설정하겠다!
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  //모든 입력포트를 입력으로 설정하겠다!
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+   usart3init(9600); //RS232포트중 채널1번에 모드버스 프로토콜을 사용한다!
+   //내가 희망하는 슬레이브주소(1), 레지스터(0~15), 코일(0~79)
+   startSimpleModbus(1,au16data, au8data); 
+   au16data[0] = 0;
+   au16data[1] = 0;
+   au16data[2] = 0;
+   au16data[3] = 270;
+   write_coil(au8data,32,false);
+   MsTimer2::set(100, task);
+   MsTimer2::start();
+}
+void loop() {
+  //write coil은 0~13
+  //출력포트가 14개이기 때문에 반복문이 14회 회전한다!
+  for(byte n=0; n<8; n++){
+    //38~45번핀까지의 디지털 상태를 설정한다!
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    //46~51번핀까지의 디지털 상태를 설정한다! ..14와 15은 아직 할당 안됨!
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+
+  //read coil은 16~31범위의 주소를 가진다!
+  //입력포트가 16개이기 때문에 반복문이 16회 회전한다!
+  for(byte n=0; n<8; n++){
+    //22~29
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    //30~37
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+  ////////////////////////////////////////
+
+  if(read_coil(au8data,31) == HIGH){
+    au16data[2] = 2;
+    write_coil(au8data,32,false);
+  }
+  if(read_coil(au8data,30) == HIGH){
+    au16data[2] = 0;
+    write_coil(au8data,32,false);
+  }
+  if(read_coil(au8data,29) == HIGH){
+    au16data[2] = 1;
+    write_coil(au8data,32,false);
+  }
+}
+
