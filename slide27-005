@@ -1,0 +1,127 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+#include "HX711.h"
+const int LOADCELL_DOUT_PIN = 6;
+const int LOADCELL_SCK_PIN = 7;
+HX711 scale;
+
+//산업용 아두이노에서 메모리를 초과하지 않는 선에서 내가 원하는 만큼 메모리를 할당하면된다!
+//unisgned int
+uint16_t au16data[16]; //레지스터 주소가(0~15)
+//byte
+//8bit짜리 자료형이 10개배열로 있으므로 80개의 주소가 있다!
+uint8_t au8data[10]; //코일 (0~79)
+
+unsigned long main_t = 0;
+
+union{
+  uint16_t t[2];
+  float f;
+}myfloat;
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+void write_int16_reg(uint16_t * data,uint16_t addr,int16_t value){
+  data[addr] = value;
+}  
+int16_t read_int16_reg(uint16_t * data,int16_t addr){
+  return data[addr];
+}  
+void write_float_reg(uint16_t * data,uint16_t addr,float value){
+  myfloat.f = value;
+  data[addr] = myfloat.t[0];
+  data[addr+1]= myfloat.t[1];
+}
+
+float read_float_reg(uint16_t * data,uint16_t addr){
+  myfloat.t[0] = data[addr];
+  myfloat.t[1] = data[addr+1];
+  return myfloat.f;
+}
+
+void setup() {
+  Serial.begin(9600);
+  //모든 출력포트를 출력으로 설정하겠다!
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  //모든 입력포트를 입력으로 설정하겠다!
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+   usart3init(9600); //RS232포트중 채널1번에 모드버스 프로토콜을 사용한다!
+   //내가 희망하는 슬레이브주소(1), 레지스터(0~15), 코일(0~79)
+   startSimpleModbus(1,au16data, au8data); 
+   
+   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+   write_int16_reg(au16data,2,-10750);
+   int factor = read_int16_reg(au16data,2);
+   scale.set_scale(factor); 
+   scale.tare(); //0점을 조절하는 함수  
+}
+void loop() {
+  //write coil은 0~13
+  //출력포트가 14개이기 때문에 반복문이 14회 회전한다!
+  for(byte n=0; n<8; n++){
+    //38~45번핀까지의 디지털 상태를 설정한다!
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    //46~51번핀까지의 디지털 상태를 설정한다! ..14와 15은 아직 할당 안됨!
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+
+  //read coil은 16~31범위의 주소를 가진다!
+  //입력포트가 16개이기 때문에 반복문이 16회 회전한다!
+  for(byte n=0; n<8; n++){
+    //22~29
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    //30~37
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+  ///////////////////////////////////////////
+  if(millis() - main_t > 100){
+    main_t = millis();
+    //무게 측정하기!
+    float weight = scale.get_units()*-0.453592;
+    write_float_reg(au16data,0,weight); //레지스터0,1에 float값 대입!
+    Serial.println(weight);
+    if(weight >= 4){
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,LOW);
+      write_coil(au8data,2,HIGH);
+    }else if(weight >= 2){
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,HIGH);
+      write_coil(au8data,2,LOW);
+    }else if(weight > 0.5){
+      write_coil(au8data,0,HIGH);
+      write_coil(au8data,1,LOW);
+      write_coil(au8data,2,LOW);
+    }else{
+      write_coil(au8data,0,LOW);
+      write_coil(au8data,1,LOW);
+      write_coil(au8data,2,LOW);
+    }
+  }
+  if(read_coil(au8data,32)){
+    scale.tare();
+    write_coil(au8data,32,LOW);
+  }
+  if(read_coil(au8data,33)){
+    int factor = read_int16_reg(au16data,2);
+    scale.set_scale(factor); 
+    write_coil(au8data,33,LOW);
+  }
+}
+
+
+
