@@ -1,0 +1,187 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+#include <MsTimer2.h>
+
+//산업용 아두이노에서 메모리를 초과하지 않는 선에서 내가 원하는 만큼 메모리를 할당하면된다!
+//unisgned int
+uint16_t au16data[16]; //레지스터 주소가(0~15)
+//byte
+//8bit짜리 자료형이 10개배열로 있으므로 80개의 주소가 있다!
+uint8_t au8data[10]; //코일 (0~79)
+
+union{
+  uint16_t t[2];
+  float f;
+}myfloat;
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+void write_float_reg(uint16_t * data,uint16_t addr,float value){
+  myfloat.f = value;
+  data[addr] = myfloat.t[0];
+  data[addr+1]= myfloat.t[1];
+}
+
+float read_float_reg(uint16_t * data,uint16_t addr){
+  myfloat.t[0] = data[addr];
+  myfloat.t[1] = data[addr+1];
+  return myfloat.f;
+}
+
+bool pump1_task = false;
+bool pump2_task = false;
+int pump1_counter = 0;
+int pump2_counter = 0;
+
+float pump1_flow = 0;
+float pump2_flow = 0;
+
+//float total = 200; //전체 용량 
+//float ratio = 0.2; //용액1의 비율
+  
+void task(){
+  float total = au16data[0]; //전체용량
+  float ratio = au16data[1]/10.0; //용액1의 비율
+  float myflow = au16data[2]/100.0; //유속
+  int pump1_max_counter = (total*ratio) /myflow;
+  int pump2_max_counter = (total*(1-ratio)) /myflow;
+  
+  if(pump1_task){
+    if(pump1_counter >= pump1_max_counter){
+      au16data[3] = pump1_counter;
+      au16data[4] = pump1_max_counter;
+      pump1_flow += myflow;
+      write_float_reg(au16data,5,pump1_flow);
+      write_coil(au8data,0,LOW);
+      Serial.println("펌프1번 종료");
+      pump1_task = false;
+    }else{
+      au16data[3] = pump1_counter;
+      au16data[4] = pump1_max_counter;
+      pump1_flow += myflow;
+      write_float_reg(au16data,5,pump1_flow);
+      write_coil(au8data,0,HIGH);
+      Serial.print("펌프1번\t");
+      Serial.print(pump1_counter);
+      Serial.print("\t");
+      Serial.print(pump1_max_counter);
+      Serial.print("\t");
+      Serial.print(pump1_flow);
+      Serial.println();
+    }
+    pump1_counter++;
+  }
+  if(pump2_task){
+    if(pump2_counter >= pump2_max_counter){
+      au16data[7] = pump2_counter;
+      au16data[8] = pump2_max_counter;
+      pump2_flow += myflow;
+      write_float_reg(au16data,9,pump2_flow);
+      write_coil(au8data,1,LOW);
+      Serial.println("펌프2번 종료");
+      pump2_task = false;
+    }else{
+      au16data[7] = pump2_counter;
+      au16data[8] = pump2_max_counter;
+      pump2_flow += myflow;
+      write_float_reg(au16data,9,pump2_flow);
+      write_coil(au8data,1,HIGH);
+      Serial.print("펌프2번\t");
+      Serial.print(pump2_counter);
+      Serial.print("\t");
+      Serial.print(pump2_max_counter);
+      Serial.print("\t");
+      Serial.print(pump2_flow);
+      Serial.println();
+    }
+    pump2_counter++;
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  //모든 출력포트를 출력으로 설정하겠다!
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  //모든 입력포트를 입력으로 설정하겠다!
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+   usart3init(9600); //RS232포트중 채널1번에 모드버스 프로토콜을 사용한다!
+   //내가 희망하는 슬레이브주소(1), 레지스터(0~15), 코일(0~79)
+   startSimpleModbus(1,au16data, au8data); 
+   MsTimer2::set(100, task); // 500ms period
+   MsTimer2::start();
+   au16data[2] = 48;
+}
+void loop() {
+  //write coil은 0~13
+  //출력포트가 14개이기 때문에 반복문이 14회 회전한다!
+  for(byte n=0; n<8; n++){
+    //38~45번핀까지의 디지털 상태를 설정한다!
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    //46~51번핀까지의 디지털 상태를 설정한다! ..14와 15은 아직 할당 안됨!
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+
+  //read coil은 16~31범위의 주소를 가진다!
+  //입력포트가 16개이기 때문에 반복문이 16회 회전한다!
+  for(byte n=0; n<8; n++){
+    //22~29
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    //30~37
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+  ////////////////////
+  
+  if(read_coil(au8data,31) == HIGH){
+    au16data[0]=200;
+    au16data[1] = 2;
+    pump1_flow=0;
+    pump2_flow=0;
+    pump1_counter=0;
+    pump2_counter=0;
+    pump1_task = true;
+    pump2_task = true;
+  }
+  if(read_coil(au8data,30) == HIGH){
+    au16data[0]=250;
+    au16data[1] = 7;
+    pump1_flow=0;
+    pump2_flow=0;
+    pump1_counter=0;
+    pump2_counter=0;
+    pump1_task = true;
+    pump2_task = true;
+  }
+  if(read_coil(au8data,32) == HIGH){
+    pump1_flow=0;
+    pump2_flow=0;
+    pump1_counter=0;
+    pump2_counter=0;
+    pump1_task = true;
+    pump2_task = true;
+    write_coil(au8data,32,LOW);
+  }
+  if(read_coil(au8data,33) == HIGH){
+    pump1_task = false;
+    pump2_task = false;
+    write_coil(au8data,0,LOW);
+    write_coil(au8data,1,LOW);
+    write_coil(au8data,33,LOW);
+  }
+}
+
+
+
