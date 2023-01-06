@@ -1,0 +1,17 @@
+//녹칸다는 대략 0.48이라는 수치를 얻었다!
+void setup() {
+  pinMode(37,INPUT); //빨강버튼
+  pinMode(38,OUTPUT); //펌프1번
+
+}
+
+void loop() {
+  //내가 계량컵의 눈금을 읽는다(ml) => A
+  //유속 = A/100
+  if(digitalRead(37) == HIGH){
+    digitalWrite(38,HIGH);
+    delay(10000);
+    digitalWrite(38,LOW);
+  }
+}
+
