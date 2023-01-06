@@ -1,0 +1,53 @@
+#include <MsTimer2.h>
+float myflow = 0.48;
+
+bool pump1_run = false;
+int pump1_counter = 0;
+
+unsigned int total = 100; //전체 목표량
+float now_flow = 0;
+
+void task(){
+  if(pump1_run){
+    int max_counter = total / myflow; //208
+    now_flow += myflow;
+    Serial.print(pump1_counter);
+    Serial.print("\t");
+    Serial.print(max_counter);
+    Serial.print("\t");
+    Serial.println(now_flow);
+    if(pump1_counter >= max_counter){
+      digitalWrite(38,LOW);
+      pump1_run = false;
+    }
+    pump1_counter++;
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT); //빨강버튼
+  pinMode(38,OUTPUT); //펌프1번
+  MsTimer2::set(100, task); // 500ms period
+  MsTimer2::start();
+}
+
+void loop() {
+  //내가 계량컵의 눈금을 읽는다(ml) => A
+  //유속 = A/100
+  if(digitalRead(37) == HIGH){
+    now_flow = 0;
+    total = 100;
+    pump1_counter = 0;
+    pump1_run = true;
+    digitalWrite(38,HIGH);
+  }
+  if(digitalRead(36) == HIGH){
+    now_flow = 0;
+    total = 200;
+    pump1_counter = 0;
+    pump1_run = true;
+    digitalWrite(38,HIGH);
+  }
+}
+
