@@ -1,0 +1,42 @@
+byte recv_buff[2];
+
+unsigned long main_t = 0;
+
+struct{
+  unsigned int output_state = 0;
+  float t;
+  float h;
+}mystruct;
+
+void setup() {
+  Serial.begin(9600); //PC-산업용 아두이노간
+  Serial1.begin(9600); //산업용 아두이노-LoRa
+  //38~51까지 출력핀을 모두 OUTPUT
+  for(int i=38;i<=51;i++){
+    pinMode(i,OUTPUT);
+  }
+}
+
+void loop() {
+  if(Serial1.available()){
+    Serial1.readBytes(recv_buff,2);  
+    //recv_buff[0] : 핀번호
+    //recv_buff[1] : 상태
+    //0==false==LOW
+    //1==true==HIGH
+    digitalWrite(38+recv_buff[0],recv_buff[1]);
+  }
+  if(millis() - main_t > 5000){
+    main_t = millis();
+    for(int i = 0;i<14;i++){
+      //14개의 출력핀의 상태를 16bit변수에 담기
+      bool state = digitalRead(38+i);
+      bitWrite(mystruct.output_state, i, state);
+    }
+    mystruct.t = random(1000,5001)/100.0;
+    mystruct.h = random(1000,5001)/100.0;
+    //LoRa로 전송!
+    Serial1.write((byte *)&mystruct,sizeof(mystruct));
+  }
+}
+
