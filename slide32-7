@@ -1,0 +1,59 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial lora(2,3);
+
+#define red_led 4
+#define green_led 5
+#define btn_on 7 
+#define btn_off 6
+
+unsigned long last_msg_t = 0;
+
+struct{
+  unsigned int output_state = 0;
+  float t;
+  float h;
+}mystruct;
+
+void setup() {
+  Serial.begin(9600); //PC-아두이노간
+  lora.begin(9600); //아두이노-LoRa
+  pinMode(red_led,OUTPUT);
+  pinMode(green_led,OUTPUT);
+  pinMode(btn_on,INPUT_PULLUP);
+  pinMode(btn_off,INPUT_PULLUP);
+}
+
+void loop() {
+  if(digitalRead(red_led) == LOW){
+    if(millis() - last_msg_t > 10000){
+      digitalWrite(red_led,HIGH);
+    }
+  }
+  if(digitalRead(btn_on) == LOW){
+    byte data[] = {0,1};
+    lora.write(data,2);
+    delay(300);
+  }
+  if(digitalRead(btn_off) == LOW){
+    byte data[] = {0,0};
+    lora.write(data,2);
+    delay(300);
+  }
+  if(lora.available()){
+    byte recv[sizeof(mystruct)];
+    lora.readBytes(recv,sizeof(mystruct));
+    memcpy(&mystruct,recv,sizeof(mystruct)); 
+    //Serial.println(mystruct.output_state,BIN);
+    bool state = bitRead(mystruct.output_state, 0);
+    digitalWrite(green_led,state);
+    digitalWrite(red_led,LOW);
+    Serial.print("온도=");
+    Serial.print(mystruct.t);
+    Serial.print(", 습도=");
+    Serial.print(mystruct.h);
+    Serial.println();
+    last_msg_t = millis();
+  }
+}
+
