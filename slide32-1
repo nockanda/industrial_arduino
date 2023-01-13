@@ -1,0 +1,19 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial lora(2,3);
+
+void setup() {
+  Serial.begin(9600); //PC-아두이노간
+  lora.begin(9600); //아두이노-LoRa
+}
+
+void loop() {
+  if(Serial.available()){
+    byte pin_num = Serial.parseInt(); //0~13
+    byte state = Serial.parseInt(); //0~1
+
+    byte data[] = {pin_num,state};
+    lora.write(data,2);
+  }
+}
+
