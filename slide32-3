@@ -1,0 +1,36 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial lora(2,3);
+
+struct{
+  unsigned int output_state = 0;
+}mystruct;
+
+void setup() {
+  Serial.begin(9600); //PC-아두이노간
+  lora.begin(9600); //아두이노-LoRa
+}
+
+void loop() {
+  if(Serial.available()){
+    byte pin_num = Serial.parseInt(); //0~13
+    byte state = Serial.parseInt(); //0~1
+
+    byte data[] = {pin_num,state};
+    lora.write(data,2);
+  }
+  if(lora.available()){
+    byte recv[sizeof(mystruct)];
+    lora.readBytes(recv,sizeof(mystruct));
+    memcpy(&mystruct,recv,sizeof(mystruct)); 
+    //Serial.println(mystruct.output_state,BIN);
+    Serial.println("-------------------------");
+    for(int i = 0;i<14;i++){
+      bool state = bitRead(mystruct.output_state, i);
+      Serial.print(38+i);
+      Serial.print("Port=");
+      Serial.println(state);
+    }
+  }
+}
+
