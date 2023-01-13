@@ -1,0 +1,73 @@
+#include "nockanda.h"
+
+#define red_led 4
+#define green_led 5
+#define btn_on 7 
+#define btn_off 6
+
+
+SoftwareSerial max3232(2,3);
+Nockanda_modbus nm(&max3232);
+
+unsigned long main_t = 0;
+bool sw = false;
+
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  digitalWrite(red_led,LOW);
+  Serial.print("write single coil 완료함");
+}
+void read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data){
+  digitalWrite(red_led,LOW);
+  Serial.println("read_coils 완료함");
+  //data[3] : 7~0
+  //data[4] : 13~8
+  bool state = (data[3] & 0x01);
+  digitalWrite(green_led,state);
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  digitalWrite(red_led,LOW);
+  Serial.println("read_holding_register 완료함");
+  //data[3] ~ data[4]
+  //data[5] ~ data[6]
+  Serial.print("data1=");
+  Serial.print(data[3]*256 + data[4]);
+  Serial.print(",data2=");
+  Serial.print(data[5]*256 + data[6]);
+  Serial.println();
+}
+void timeout_error(){
+  digitalWrite(red_led,HIGH);
+}
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  nm.write_single_coil_cb = write_single_coil;
+  nm.read_holding_register_cb = read_holding_register;
+  nm.read_coils_cb = read_coils;
+  nm.timeout_cb = timeout_error;
+  pinMode(red_led,OUTPUT);
+  pinMode(green_led,OUTPUT);
+  pinMode(btn_on,INPUT_PULLUP);
+  pinMode(btn_off,INPUT_PULLUP);
+
+}
+void loop() {
+  nm.loop(); //녹칸다의 모드버스 기능을 동작시키는 부분
+  if(digitalRead(btn_on) == LOW){
+    nm.nockanda_write_single_coil_queue(1,0,0xFF00);
+    delay(300);
+  }
+  if(digitalRead(btn_off) == LOW){
+    nm.nockanda_write_single_coil_queue(1,0,0x0000); 
+    delay(300);
+  }
+  
+  if(millis() - main_t > 5000){
+    main_t = millis();
+    nm.nockanda_read_coils_queue(1,0,14,0x0000);
+    nm.nockanda_read_hoding_register_queue(1,0,2,0x0000); 
+  }
+}
+
+
