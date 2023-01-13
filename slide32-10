@@ -1,0 +1,80 @@
+#include "nockanda.h"
+
+SoftwareSerial max3232(2,3);
+Nockanda_modbus nm(&max3232);
+
+unsigned long main_t = 0;
+bool sw = false;
+
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  Serial.print("write single coil 완료함");
+}
+void write_multiple_coils(byte id,uint16_t addr,uint16_t cnt){
+  Serial.print("write multiple coils 완료함");
+}
+void write_single_register(byte id,uint16_t addr, uint16_t data){
+  Serial.print("write_single_register 완료함");
+}
+void read_coils(byte id,uint16_t addr,uint16_t cnt,uint16_t num, byte * data){
+  Serial.println("read_coils 완료함");
+  //data[3] : 7~0
+  //data[4] : 13~8
+  Serial.println("----------------------");
+  for(int i = 0;i<8;i++){
+    bool state = ((data[3] >> i) & 0x01);
+    Serial.print(38+i);
+    Serial.print("port=");
+    Serial.print(state);
+    Serial.println();
+  }
+  for(int i = 0;i<6;i++){
+    bool state = ((data[4] >> i) & 0x01);
+    Serial.print(38+8+i);
+    Serial.print("port=");
+    Serial.print(state);
+    Serial.println();
+  }
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.println("read_holding_register 완료함");
+  //data[3] ~ data[4]
+  //data[5] ~ data[6]
+  Serial.print("data1=");
+  Serial.print(data[3]*256 + data[4]);
+  Serial.print(",data2=");
+  Serial.print(data[5]*256 + data[6]);
+  Serial.println();
+}
+void read_input_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.print("read_input_register 완료함");
+}
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  nm.write_single_coil_cb = write_single_coil;
+  nm.read_holding_register_cb = read_holding_register;
+  nm.read_input_register_cb = read_input_register;
+  nm.read_coils_cb = read_coils;
+  nm.write_multiple_coils_cb = write_multiple_coils;
+  nm.write_single_register_cb=write_single_register;
+}
+void loop() {
+  nm.loop(); //녹칸다의 모드버스 기능을 동작시키는 부분
+  if(Serial.available()){
+    byte pin_num = Serial.parseInt(); //0~13
+    byte state = Serial.parseInt(); //0~1
+    if(state == 0){
+      nm.nockanda_write_single_coil_queue(1,pin_num,0x0000); 
+    }else{
+      nm.nockanda_write_single_coil_queue(1,pin_num,0xFF00);
+    }
+  }
+  if(millis() - main_t > 5000){
+    main_t = millis();
+    nm.nockanda_read_coils_queue(1,0,14,0x0000);
+    nm.nockanda_read_hoding_register_queue(1,0,2,0x0000); 
+  }
+}
+
+
