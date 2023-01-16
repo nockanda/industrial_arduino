@@ -1,0 +1,34 @@
+//DIR이 HIGH면 반시계로 회전하고 LOW면 시계방향으로 회전한다!
+#define DIR 6
+#define PUL 7
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(DIR,OUTPUT);
+  pinMode(PUL,OUTPUT);
+}
+void loop() {
+  if(Serial.available()){
+    char c = Serial.read();
+    if(c == '0'){
+      //역회전
+      digitalWrite(DIR,LOW);
+      for(int i = 0;i<1600;i++){
+        digitalWrite(PUL,HIGH);
+        delayMicroseconds(200); //0.0002초
+        digitalWrite(PUL,LOW);
+        delayMicroseconds(200); //0.0002초
+      }
+    }else if(c == '1'){
+      //정회전
+      digitalWrite(DIR,HIGH);
+      for(int i = 0;i<1600;i++){
+        digitalWrite(PUL,HIGH);
+        delayMicroseconds(200); //0.0002초
+        digitalWrite(PUL,LOW);
+        delayMicroseconds(200); //0.0002초
+      }
+    }
+  }
+}
+
