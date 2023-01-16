@@ -1,0 +1,80 @@
+//37번버튼, 36번버튼, 35번버튼 3개가 있다고 할때 37번을 누르면 스탭모터가 현위치에서 90도위치로 이동하고, 36번버튼을 누르면 180도 위치로 이동하고, 35번을 누르면 0의 위치로 이동하도록 하시오!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+int target = 0;
+unsigned long t1 = 0;
+unsigned long t2 = 0;
+unsigned long t3 = 0;
+bool old_btn1 = LOW;
+bool old_btn2 = LOW;
+bool old_btn3 = LOW;
+
+void setup()
+{  
+  Serial.begin(9600);
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+  bool now_btn1 = digitalRead(btn_forward);
+  bool now_btn2 = digitalRead(btn_stop);
+  bool now_btn3 = digitalRead(btn_backward);
+
+  if(now_btn1 == HIGH && old_btn1 == LOW){
+    t1 = millis();
+  }else if(now_btn1 == LOW && old_btn1 == HIGH){
+    if(millis() - t1 > 50){
+      target -= 400;
+    }
+  }
+  if(now_btn2 == HIGH && old_btn2 == LOW){
+    t2 = millis();
+  }else if(now_btn2 == LOW && old_btn2 == HIGH){
+    if(millis() - t2 > 50){
+      target += 800;
+    }
+  }
+  if(now_btn3 == HIGH && old_btn3 == LOW){
+    t3 = millis();
+  }else if(now_btn3 == LOW && old_btn3 == HIGH){
+    if(millis() - t3 > 50){
+      target += 400;
+    }
+  }
+
+  old_btn1 = now_btn1;
+  old_btn2 = now_btn2;
+  old_btn3 = now_btn3;
+   
+   
+   if(target > stepper.currentPosition()){
+    stepper.setSpeed(1600); //currentPosition도 점점 상승
+   }else if(target < stepper.currentPosition()){
+    stepper.setSpeed(-1600); //currentPosition 점점 하락
+   }else{
+    stepper.setSpeed(0);
+   }
+   
+    stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
+
