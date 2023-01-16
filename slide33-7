@@ -1,0 +1,64 @@
+//아래 3가지 값을 출력하시오!
+//현재위치(스탭량), 몇바퀴 회전했냐, 현재각도
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+unsigned long t = 0;
+
+void setup()
+{  
+  Serial.begin(9600);
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{  
+  if(millis() - t > 100){
+    t = millis();
+    long now_pos = stepper.currentPosition();
+    float cnt = now_pos/1600.0;
+    float degree = 360*((now_pos%1600)/1600.0);
+    Serial.print("now pos=");
+    Serial.print(now_pos);
+    Serial.print(",now cnt=");
+    Serial.print(cnt);
+    Serial.print("now degree=");
+    Serial.print(degree);
+    Serial.println();
+  }
+  
+   if(digitalRead(btn_forward) == HIGH){
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    stepper.setSpeed(1600);
+   }else if(digitalRead(btn_backward) == HIGH){
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+    stepper.setSpeed(-1600);
+   }else{
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,LOW);
+    stepper.setSpeed(0);
+   }
+   
+    stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
+
