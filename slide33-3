@@ -1,0 +1,21 @@
+#include <AccelStepper.h>
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+void setup()
+{  
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(-1600); //초당 몇스탭이냐?
+   //속도가 1600이면 dir==high
+   //속도가 -1600이면 dir==low
+}
+
+void loop()
+{    
+    stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
