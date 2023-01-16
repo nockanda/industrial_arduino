@@ -1,0 +1,60 @@
+//37번버튼, 36번버튼, 35번버튼 3개가 있다고 할때 37번을 누르면 스탭모터가 현위치에서 90도위치로 이동하고, 36번버튼을 누르면 180도 위치로 이동하고, 35번을 누르면 0의 위치로 이동하도록 하시오!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+int target = 0;
+
+void setup()
+{  
+  Serial.begin(9600);
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+   if(digitalRead(btn_forward) == HIGH){
+    //35
+    //0
+    target = 0;
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36
+    //180
+    //1600스탭이 360도 이므로 180도는 1600스탭의 1/2에 해당됨
+    target = 800;
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37
+    //1600스탭이 360도 이므로 90도는 1600스탭의 1/4에 해당됨
+    target = 400;
+   }
+   
+   if(target > stepper.currentPosition()){
+    stepper.setSpeed(1600); //currentPosition도 점점 상승
+   }else if(target < stepper.currentPosition()){
+    stepper.setSpeed(-1600); //currentPosition 점점 하락
+   }else{
+    stepper.setSpeed(0);
+   }
+   
+    stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
+
