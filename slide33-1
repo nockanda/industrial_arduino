@@ -1,0 +1,32 @@
+#define DIR 6
+#define PUL 7
+
+void setup() {
+  pinMode(DIR,OUTPUT);
+  pinMode(PUL,OUTPUT);
+}
+
+void loop() {
+  //정회전으로 한바퀴 회전한다(1600step -> 360도)
+  //0.64초에 어떤 방향으로 1회전한다!
+  digitalWrite(DIR,HIGH);
+  for(int i = 0;i<1600;i++){
+    digitalWrite(PUL,HIGH);
+    delayMicroseconds(200); //0.0002초
+    digitalWrite(PUL,LOW);
+    delayMicroseconds(200); //0.0002초
+  }
+  //2초쉰다
+  delay(2000);
+  //역회전으로 한바퀴 회전한다
+  digitalWrite(DIR,LOW);
+  for(int i = 0;i<1600;i++){
+    digitalWrite(PUL,HIGH);
+    delayMicroseconds(200); //0.0002초
+    digitalWrite(PUL,LOW);
+    delayMicroseconds(200); //0.0002초
+  }
+  //2초쉰다
+  delay(2000);
+}
+
