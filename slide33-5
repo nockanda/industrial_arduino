@@ -1,0 +1,46 @@
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+void setup()
+{  
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{  
+   if(digitalRead(btn_forward) == HIGH){
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    stepper.setSpeed(1600);
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+    stepper.setSpeed(-1600);
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,LOW);
+    stepper.setSpeed(0);
+   }
+   
+    stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
