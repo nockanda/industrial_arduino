@@ -1,0 +1,92 @@
+//task의 갯수를 늘리거나 줄이려면?
+#include <arduino-timer.h>
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+#define SPEED 1600
+
+auto timer = timer_create_default();
+
+bool task_run = false;
+int task_counter = 0;
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);
+
+int target = 0;
+
+bool task(void *) {
+  if(task_run){
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    if(task_counter == 0){
+      target = 1200;
+    }else if(task_counter == 13){
+      target = 400;
+    }else if(task_counter == 23){
+      target = 800;
+    }else if(task_counter == 31){
+      target = 1200;
+    }else if(task_counter == 39){
+      target = 0;
+    }else if(task_counter == 51){
+      task_counter = -1;
+    }
+    
+    task_counter++;
+  }else{
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+  }
+  return true;
+}
+
+void setup() {
+  Serial.begin(9600);
+  stepper.setMaxSpeed(1600);
+  stepper.setSpeed(0); 
+  pinMode(green_lamp,OUTPUT);
+  pinMode(red_lamp,OUTPUT);
+  pinMode(btn_forward,INPUT);
+  pinMode(btn_stop,INPUT);
+  pinMode(btn_backward,INPUT);
+  timer.every(100, task);
+}
+
+void loop() {
+  timer.tick();
+  
+  if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    task_counter = 0;
+    task_run = true;
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    target = 0;
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    task_run = false;
+   }
+  
+  //스탭모터를 원하는 위치로 가져다 놓는 부분!
+  if(target > stepper.currentPosition()){
+    stepper.setSpeed(SPEED); //currentPosition도 점점 상승
+   }else if(target < stepper.currentPosition()){
+    stepper.setSpeed(-SPEED); //currentPosition 점점 하락
+   }else{
+    stepper.setSpeed(0);
+   }
+   
+  stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
+
