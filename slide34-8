@@ -1,0 +1,75 @@
+#include <arduino-timer.h>
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+auto timer = timer_create_default();
+
+bool task_run = false;
+int task_counter = 0;
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);
+
+bool task(void *) {
+  if(task_run){
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    if(task_counter == 0){
+      stepper.moveTo(8000); 
+    }else if(task_counter == 50){
+      stepper.moveTo(9600);
+    }else if(task_counter == 75){
+      stepper.moveTo(0);
+    }else if(task_counter == 130){
+      task_counter = -1;
+    }
+    
+    task_counter++;
+  }else{
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+  }
+  return true;
+}
+
+void setup() {
+  Serial.begin(9600);
+  stepper.setMaxSpeed(3200); //초당 몇스탭씩?
+  stepper.setAcceleration(1600); //초당 속도가 400씩 올라간다!
+  pinMode(green_lamp,OUTPUT);
+  pinMode(red_lamp,OUTPUT);
+  pinMode(btn_forward,INPUT);
+  pinMode(btn_stop,INPUT);
+  pinMode(btn_backward,INPUT);
+  timer.every(100, task);
+}
+
+void loop() {
+  timer.tick();
+  
+  if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    task_counter = 0;
+    task_run = true;
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    stepper.moveTo(0);
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    task_run = false;
+   }
+  
+   
+  stepper.run();
+}
+
+
