@@ -1,0 +1,43 @@
+#include <arduino-timer.h>
+
+auto timer = timer_create_default();
+
+bool task_run = false;
+int task_counter = 0;
+
+bool task(void *) {
+  if(task_run){
+    if(task_counter == 0){
+      Serial.println("스탭모터야 90도 위치로 회전해라~"); 
+    }else if(task_counter == 10){
+      Serial.println("스탭모터야 180도 위치로 회전해라~"); 
+    }else if(task_counter == 20){
+      Serial.println("스탭모터야 270도 위치로 회전해라~"); 
+    }else if(task_counter == 30){
+      task_counter = -1;
+    }
+    
+    task_counter++;
+  }
+  return true;
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(37,INPUT); //빨강
+  pinMode(35,INPUT); //녹색
+  timer.every(100, task);
+}
+
+void loop() {
+  timer.tick();
+
+  if(digitalRead(37) == HIGH){
+    task_run = false;
+  }
+  if(digitalRead(35) == HIGH){
+    task_counter = 0;
+    task_run = true;
+  }
+}
+
