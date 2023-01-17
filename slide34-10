@@ -1,0 +1,87 @@
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+#define margin 400 //리미트스위치가 떨어지는 간격
+#define direct 1 //반대방향이면 -1
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+unsigned long t = 0;
+
+void setup()
+{  
+  Serial.begin(9600);
+   //1초당 1회전
+   stepper.setMaxSpeed(1600); //초당 몇스탭씩?
+   stepper.setAcceleration(400); //초당 속도가 400씩 올라간다!
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+   
+   
+   digitalWrite(red_lamp,HIGH);
+}
+
+void loop()
+{  
+  if(stepper.run()){
+    //돌아가는중
+    digitalWrite(red_lamp,LOW);
+    digitalWrite(green_lamp,HIGH);
+  }else{
+    //멈춤
+    digitalWrite(red_lamp,HIGH);
+    digitalWrite(green_lamp,LOW);
+  }
+  
+  if(millis() - t > 500){
+    t = millis();
+    Serial.print("현재시간=");
+    Serial.println(t);
+  }
+  if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    stepper.moveTo(1600 * 3);
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    Serial.println("1초후 호밍 모드로 진입합니다");
+    delay(1000);
+    //스탭모터가 -방향으로 저속으로 자동으로 홈의 위치로 이동한다!
+    stepper.setSpeed(-100 * direct);
+    while(true){
+      digitalWrite(red_lamp,HIGH);
+      digitalWrite(green_lamp,HIGH);
+      stepper.runSpeed();
+      
+      //요부분이 리미트 스위치에 의해서 한계점에 도달했다고 가정함!
+      if(digitalRead(btn_stop) == HIGH){
+        digitalWrite(red_lamp,HIGH);
+        digitalWrite(green_lamp,LOW);
+        //양의 방향으로 리미트 스위치가 약간 떨어질만큼 이동시킨다!
+        stepper.setCurrentPosition(-margin * direct);
+        Serial.println("호밍모드를 탈출합니다!");
+        delay(300);
+        break;
+      }
+    }
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    stepper.moveTo(0); //0의 위치로 가라
+   }
+   
+   
+}
+
+
