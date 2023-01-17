@@ -1,0 +1,64 @@
+//빨간버튼(37)을 누르면 90도 위치로 정속회전한다. 노란버튼(36) 누르면 180도 위치로 정속회전한다! 녹색버튼(35)을 누르면 0도 위치로 이동한다!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+int target = 0;
+
+void setup()
+{  
+  Serial.begin(9600);
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+   if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    nockanda_stepper(0);
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노란)
+    nockanda_stepper(800);
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강) -> 400step
+    nockanda_stepper(400);
+   }
+   
+}
+
+void nockanda_stepper(long mystep){
+  if(stepper.currentPosition() < mystep){
+      stepper.setSpeed(1600);
+    }else if(stepper.currentPosition() > mystep){
+      stepper.setSpeed(-1600);
+    }else{
+      stepper.setSpeed(0);
+    }
+    while(true){
+      if(stepper.currentPosition() == mystep){
+        stepper.setSpeed(0);
+        break;
+      }
+      stepper.runSpeed();
+    }
+}
+
+
