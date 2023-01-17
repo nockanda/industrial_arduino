@@ -1,0 +1,111 @@
+//task가 2종류 이상이라면?
+#include <arduino-timer.h>
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+#define SPEED 1600
+
+auto timer = timer_create_default();
+
+bool task1_run = false;
+int task1_counter = 0;
+bool task2_run = false;
+int task2_counter = 0;
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);
+
+int target = 0;
+
+bool task(void *) {
+  if(task1_run){
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    if(task1_counter == 0){
+      target = 1200;
+    }else if(task1_counter == 13){
+      target = 400;
+    }else if(task1_counter == 23){
+      target = 800;
+    }else if(task1_counter == 31){
+      target = 1200;
+    }else if(task1_counter == 39){
+      target = 0;
+    }else if(task1_counter == 51){
+      task1_counter = -1;
+    }
+    task1_counter++;
+  }else if(task2_run){
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+    if(task2_counter == 0){
+      target = -400;
+    }else if(task2_counter == 8){
+      target = 1200;
+    }else if(task2_counter == 23){
+      target = 0;
+    }else if(task2_counter == 36){
+      task2_counter = -1;
+    }
+    task2_counter++;
+  }else{
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,LOW);
+  }
+  return true;
+}
+
+void setup() {
+  Serial.begin(9600);
+  stepper.setMaxSpeed(1600);
+  stepper.setSpeed(0); 
+  pinMode(green_lamp,OUTPUT);
+  pinMode(red_lamp,OUTPUT);
+  pinMode(btn_forward,INPUT);
+  pinMode(btn_stop,INPUT);
+  pinMode(btn_backward,INPUT);
+  timer.every(100, task);
+}
+
+void loop() {
+  timer.tick();
+  
+  if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    task1_counter = 0;
+    task1_run = true;
+    task2_run = false;
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    task2_counter = 0;
+    task1_run = false;
+    task2_run = true;
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    task1_run = false;
+    task2_run = false;
+    target = 0;
+   }
+  
+  //스탭모터를 원하는 위치로 가져다 놓는 부분!
+  if(target > stepper.currentPosition()){
+    stepper.setSpeed(SPEED); //currentPosition도 점점 상승
+   }else if(target < stepper.currentPosition()){
+    stepper.setSpeed(-SPEED); //currentPosition 점점 하락
+   }else{
+    stepper.setSpeed(0);
+   }
+   
+  stepper.runSpeed(); //얘는 메인루프안에 그냥 있는거
+}
+
+
