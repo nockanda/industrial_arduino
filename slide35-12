@@ -1,0 +1,92 @@
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+int target = 0;
+
+bool old_btn = LOW;
+
+long now_pos = 0; //학습시 시작위치
+long now_step = 0; //얼만큼 이동했냐
+
+void setup()
+{  
+  Serial.begin(9600);
+   //1초당 1회전
+   stepper.setMaxSpeed(1600);
+   stepper.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+   bool now_btn = digitalRead(btn_forward);
+   if(now_btn == HIGH && old_btn == LOW){
+     now_pos = stepper.currentPosition();
+     stepper.setSpeed(1600);
+   }else if(now_btn == LOW && old_btn == HIGH){
+     now_step = stepper.currentPosition() - now_pos;
+     stepper.setSpeed(0);
+   }
+   old_btn = now_btn;
+   
+   if(digitalRead(btn_stop) == HIGH){
+     //now_pos 위치로 이동
+     while(true){
+      if(digitalRead(btn_backward) == HIGH){
+        stepper.setSpeed(0);
+        break;
+      }
+       if(now_pos > stepper.currentPosition()){
+          stepper.setSpeed(1600);
+       }else if(now_pos < stepper.currentPosition()){
+          stepper.setSpeed(-1600);
+       }
+       while(true){
+        if(digitalRead(btn_backward) == HIGH){
+          stepper.setSpeed(0);
+          break;
+        }
+          if(now_pos == stepper.currentPosition()){
+            break;
+          }
+          stepper.runSpeed();
+       }
+       //무한히 반복한다
+       if(now_pos+now_step > stepper.currentPosition()){
+          stepper.setSpeed(1600);
+       }else if(now_pos+now_step < stepper.currentPosition()){
+          stepper.setSpeed(-1600);
+       }
+       
+       while(true){
+        if(digitalRead(btn_backward) == HIGH){
+          stepper.setSpeed(0);
+          break;
+        }
+          if(now_pos+now_step == stepper.currentPosition()){
+            stepper.setSpeed(0);
+            break;
+          }
+          stepper.runSpeed();
+       }
+     }
+   }
+   
+   stepper.runSpeed();
+}
+
+
