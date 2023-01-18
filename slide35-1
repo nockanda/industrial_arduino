@@ -1,0 +1,60 @@
+//1.녹색버튼(35)을 누르고 있는 동안 스탭모터1번이 1600의 속도로 정회전하도록하고 빨간버튼(37)을 누르고 있는동안 스탭모터 2번이 1600의 속도로 정회전 하도록하시오!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR1 6
+#define PUL1 7
+#define DIR2 8
+#define PUL2 9
+
+AccelStepper stepper1 = AccelStepper(1, PUL1, DIR1);
+AccelStepper stepper2 = AccelStepper(1, PUL2, DIR2);
+
+int target = 0;
+
+void setup()
+{  
+  Serial.begin(9600);
+   stepper1.setMaxSpeed(1600);
+   stepper1.setSpeed(0); 
+   stepper2.setMaxSpeed(1600);
+   stepper2.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+   if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    //스탭모터 1번이 1600의 속도로 회전한다
+    stepper1.setSpeed(1600);
+   }else{
+    stepper1.setSpeed(0);
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    //아무것도 안함
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    //스탭모터 2번이 1600의 속도로 회전한다!
+    stepper2.setSpeed(1600);
+   }else{
+    stepper2.setSpeed(0);
+   }
+   
+   
+    stepper1.runSpeed(); 
+    stepper2.runSpeed(); 
+}
+
+
