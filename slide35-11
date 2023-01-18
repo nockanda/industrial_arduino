@@ -1,0 +1,116 @@
+//11.(가감속)녹색버튼을 누르면 task1이 수행되고 적색버튼을 누르면 task2가 수행된다 노란버튼을 누르면 모든 task가 중단된다! (task1과 task2는 동시에 실행될 수 없다)
+//task1은 스탭모터1번 180도 이동 (이동완료후) 스탭모터2 180도 이동 (이동완료후) 스탭모터1 270도 이동 (완료) 스탭모터2 90도 이동 (완료) 스탭모터1 원점이동 (완료) 스탭모터2 원점이동 (완료)이다!
+//task2는 스탭모터1이 8000이동하고 동시에 스탭모터2가 1600이동 (완료) 스탭모터2가 6400으로 이동 (완료) 스탭모터1번이 1600으로 이동 (완료) 둘다 0으로 이동
+#include <arduino-timer.h>
+#include <AccelStepper.h>
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR1 6
+#define PUL1 7
+#define DIR2 8
+#define PUL2 9
+
+AccelStepper stepper1 = AccelStepper(1, PUL1, DIR1);
+AccelStepper stepper2 = AccelStepper(1, PUL2, DIR2);
+
+auto timer = timer_create_default();
+
+bool task1_run = false;
+int task1_counter = 0;
+bool task2_run = false;
+int task2_counter = 0;
+
+bool task(void *) {
+  if(task1_run){
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    if(task1_counter == 0){
+      //스탭1 -> 180
+      stepper1.moveTo(800);
+    }else if(task1_counter == 31){
+      //스탭2 -> 180
+      stepper2.moveTo(800);
+    }else if(task1_counter == 62){
+      //스탭1 -> 270
+      stepper1.moveTo(1200);
+    }else if(task1_counter == 84){
+      //스탭2 -> 90
+      stepper2.moveTo(400);
+    }else if(task1_counter == 106){
+      //스탭1 -> 0
+      stepper1.moveTo(0);
+    }else if(task1_counter == 143){
+      //스탭2 -> 0
+      stepper2.moveTo(0);
+    }else if(task1_counter == 165){
+      task1_counter = -1;
+    }
+    task1_counter++;
+  }else if(task2_run){
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+    if(task2_counter == 0){
+      //스탭1 8000
+      //스탭2 1600
+      stepper1.moveTo(8000);
+      stepper2.moveTo(1600);
+    }else if(task2_counter == 92){
+      stepper2.moveTo(6400);
+    }else if(task2_counter == 162){
+      stepper1.moveTo(1600);
+    }else if(task2_counter == 242){
+      stepper1.moveTo(0);
+      stepper2.moveTo(0);
+    }else if(task2_counter == 322){
+      task2_counter = -1;
+    }
+    task2_counter++; 
+  }else{
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,LOW);
+  }
+  return true; 
+}
+
+void setup() {
+  stepper1.setMaxSpeed(1600);
+  stepper1.setAcceleration(400); 
+  stepper2.setMaxSpeed(1600);
+  stepper2.setAcceleration(400); 
+  pinMode(green_lamp,OUTPUT);
+  pinMode(red_lamp,OUTPUT);
+  pinMode(btn_forward,INPUT);
+  pinMode(btn_stop,INPUT);
+  pinMode(btn_backward,INPUT);
+  timer.every(100, task);
+}
+
+void loop() {
+  timer.tick();
+     
+  stepper1.run(); 
+  stepper2.run();
+
+  if(digitalRead(btn_forward)==HIGH){
+    //35(녹색)
+    task1_counter = 0;
+    task1_run = true;
+  }
+  if(digitalRead(btn_stop)==HIGH){
+    //36(노랑)
+    stepper1.moveTo(0);
+    stepper2.moveTo(0);
+    task1_run = false;
+    task2_run = false;
+  }
+  if(digitalRead(btn_backward)==HIGH){
+    //37(적색)
+    task2_counter = 0;
+    task2_run = true;
+  }
+}
+
