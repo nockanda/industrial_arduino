@@ -1,0 +1,63 @@
+//2.녹색버튼(35)을 누르면 스탭모터 1은 정회전 2는 역회전을 한다, 빨간버튼을 누르면 스탭모터 1은 역회전을하고 2는 정회전을한다, 노란버튼을 누르면 둘다 멈춘다!(자동차의 바퀴)
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR1 6
+#define PUL1 7
+#define DIR2 8
+#define PUL2 9
+
+AccelStepper stepper1 = AccelStepper(1, PUL1, DIR1);
+AccelStepper stepper2 = AccelStepper(1, PUL2, DIR2);
+
+int target = 0;
+
+void setup()
+{  
+  Serial.begin(9600);
+   stepper1.setMaxSpeed(1600);
+   stepper1.setSpeed(0); 
+   stepper2.setMaxSpeed(1600);
+   stepper2.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+   if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    digitalWrite(green_lamp,HIGH);
+    digitalWrite(red_lamp,LOW);
+    stepper1.setSpeed(1600);
+    stepper2.setSpeed(-1600);
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,LOW);
+    stepper1.setSpeed(0);
+    stepper2.setSpeed(0);
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    digitalWrite(green_lamp,LOW);
+    digitalWrite(red_lamp,HIGH);
+    stepper1.setSpeed(-1600);
+    stepper2.setSpeed(1600);
+   }
+   
+   
+    stepper1.runSpeed(); 
+    stepper2.runSpeed(); 
+}
+
+
