@@ -1,0 +1,71 @@
+//3.녹색버튼(35)을 누르면 스탭모터 1번이 3200스탭만큼 이동한다!(2바퀴회전한다), 빨강버튼(37)을 누르면 스탭모터 2번이 -3200스탭만큼 이동한다!(-2바퀴), 노란버튼(36)을 누르면 둘다 원점으로 돌아온다!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR1 6
+#define PUL1 7
+#define DIR2 8
+#define PUL2 9
+
+AccelStepper stepper1 = AccelStepper(1, PUL1, DIR1);
+AccelStepper stepper2 = AccelStepper(1, PUL2, DIR2);
+
+int target1 = 0; //스탭모터1의 목표지점
+int target2 = 0; //스탭모터2의 목표지점
+
+void setup()
+{  
+  Serial.begin(9600);
+   stepper1.setMaxSpeed(1600);
+   stepper1.setSpeed(0); 
+   stepper2.setMaxSpeed(1600);
+   stepper2.setSpeed(0); 
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{    
+   if(digitalRead(btn_forward) == HIGH){
+    //35(녹색)
+    target1 = 3200;
+   }
+   if(digitalRead(btn_stop) == HIGH){
+    //36(노랑)
+    target1 = 0;
+    target2 = 0;
+   }
+   if(digitalRead(btn_backward) == HIGH){
+    //37(빨강)
+    target2 = -3200;
+   }
+   
+   if(stepper1.currentPosition() < target1){
+     stepper1.setSpeed(1600);
+   }else if(stepper1.currentPosition() > target1){
+     stepper1.setSpeed(-1600);
+   }else{
+     stepper1.setSpeed(0);
+   }
+
+   if(stepper2.currentPosition() < target2){
+     stepper2.setSpeed(1600);
+   }else if(stepper2.currentPosition() > target2){
+     stepper2.setSpeed(-1600);
+   }else{
+     stepper2.setSpeed(0);
+   }
+   
+    stepper1.runSpeed(); 
+    stepper2.runSpeed(); 
+}
+
+
