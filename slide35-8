@@ -1,0 +1,51 @@
+//7.35번버튼을 누르면 스탭모터1번이 6400위치로 이동하고 스탭모터 2번은 -3200위치로 이동한다, 36번버튼을 누르면 각각 3200과 -6400위치로 이동하고, 37번 버튼을 누르면 원점으로 복귀한다!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR1 6
+#define PUL1 7
+#define DIR2 8
+#define PUL2 9
+
+AccelStepper stepper1 = AccelStepper(1, PUL1, DIR1);
+AccelStepper stepper2 = AccelStepper(1, PUL2, DIR2);
+
+void setup() {
+  Serial.begin(9600);
+  stepper1.setMaxSpeed(1600);
+  stepper1.setAcceleration(400);
+  stepper2.setMaxSpeed(1600);
+  stepper2.setAcceleration(400);
+   
+  pinMode(green_lamp,OUTPUT);
+  pinMode(red_lamp,OUTPUT);
+  pinMode(btn_forward,INPUT);
+  pinMode(btn_stop,INPUT);
+  pinMode(btn_backward,INPUT);
+}
+
+void loop() {
+  if(digitalRead(btn_forward) == HIGH){
+    //35 
+    stepper1.moveTo(6400);
+    stepper2.moveTo(-3200);
+  }
+  if(digitalRead(btn_stop) == HIGH){
+    //36
+    stepper1.moveTo(3200);
+    stepper2.moveTo(-6400);
+  }
+  if(digitalRead(btn_backward) == HIGH){
+    //37 
+    stepper1.moveTo(0);
+    stepper2.moveTo(0);
+  }
+  stepper1.run();
+  stepper2.run();
+}
+
