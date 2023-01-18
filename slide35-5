@@ -1,0 +1,55 @@
+//5.멀티스태퍼를 이용해서 스탭모터 2개가 지정된 위치로 이동되도록 하시오!
+#include <AccelStepper.h>
+#include <MultiStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR1 6
+#define PUL1 7
+#define DIR2 8
+#define PUL2 9
+
+AccelStepper stepper1 = AccelStepper(1, PUL1, DIR1);
+AccelStepper stepper2 = AccelStepper(1, PUL2, DIR2);
+MultiStepper steppers;
+
+long positions[2];
+
+void setup()
+{  
+   Serial.begin(9600);
+   stepper1.setMaxSpeed(1600);
+   stepper2.setMaxSpeed(1600);
+   steppers.addStepper(stepper1);
+   steppers.addStepper(stepper2);
+   
+   pinMode(green_lamp,OUTPUT);
+   pinMode(red_lamp,OUTPUT);
+   pinMode(btn_forward,INPUT);
+   pinMode(btn_stop,INPUT);
+   pinMode(btn_backward,INPUT);
+}
+
+void loop()
+{   
+   if(digitalRead(btn_forward) == HIGH){
+     positions[0] = 8000;
+     positions[1] = -1600;
+     steppers.moveTo(positions);
+     Serial.println("스탭모터 제어가 시작됩니다!");
+     steppers.runSpeedToPosition(); // Blocks until all are in position
+     Serial.println("스탭모터 제어가 종료됩니다!");
+   }
+   if(digitalRead(btn_backward) == HIGH){
+     positions[0] = 0;
+     positions[1] = 0;
+     steppers.moveTo(positions);
+     steppers.runSpeedToPosition(); // Blocks until all are in position
+   }
+}
+
+
