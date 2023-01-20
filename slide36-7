@@ -1,0 +1,124 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+#include <AccelStepper.h>
+#include <arduino-timer.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+auto timer = timer_create_default();
+
+bool task_run = false;
+int task_counter = 0;
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+uint16_t au16data[16];
+uint8_t au8data[10]; 
+
+bool task(void *) {
+  if(task_run){
+    write_coil(au8data,1,HIGH);
+    write_coil(au8data,0,LOW);
+    if(task_counter == 0){
+      stepper.moveTo(read_int16_reg(au16data,2));
+    }else if(task_counter == au16data[5]){
+      stepper.moveTo(read_int16_reg(au16data,3));
+    }else if(task_counter == au16data[6]){
+      stepper.moveTo(read_int16_reg(au16data,4));
+    }else if(task_counter == au16data[7]){
+      task_counter = -1;
+    }
+    
+    task_counter++;
+  }else{
+    write_coil(au8data,1,LOW);
+    write_coil(au8data,0,HIGH);
+  }
+  return true;
+}
+
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+void write_int32_reg(uint16_t * data,uint16_t addr,int32_t value){
+  data[addr] = value >> 16;
+  data[addr+1] = value & 0xFFFF;
+}
+void write_int16_reg(uint16_t * data,uint16_t addr,int16_t value){
+  data[addr] = value;
+}  
+int16_t read_int16_reg(uint16_t * data,int16_t addr){
+  return data[addr];
+}  
+void setup() {
+  stepper.setMaxSpeed(1600);
+  stepper.setAcceleration(800);
+  timer.every(100, task);
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+  usart3init(9600);
+  startSimpleModbus(1,au16data, au8data);
+  write_int16_reg(au16data,2,400);
+  write_int16_reg(au16data,3,800);
+  write_int16_reg(au16data,4,0);
+  au16data[5] = 17;
+  au16data[6] = 24;
+  au16data[7] = 46;
+}
+void loop() {
+  timer.tick();
+  stepper.run(); //얘는 메인루프안에 그냥 있는거
+  
+  for(byte n=0; n<8; n++){
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+  for(byte n=0; n<8; n++){
+    //22~29
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    //30~37
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+  
+  if(read_coil(au8data,29) == HIGH){
+    //녹색
+    task_counter = 0;
+    task_run = true;
+  }
+  if(read_coil(au8data,30) == HIGH){
+    //노랑
+  }
+  if(read_coil(au8data,31) == HIGH){
+    //빨강
+    stepper.moveTo(0);
+    task_run = false;
+  }
+
+  write_int32_reg(au16data,0,stepper.currentPosition());
+
+}
+
+
+
+
