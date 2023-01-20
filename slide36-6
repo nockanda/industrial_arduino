@@ -1,0 +1,104 @@
+#include <SimpleModbusRtu_mega2560_2.h>//라이브러리 사용하겠다!
+#include <AccelStepper.h>
+
+#define green_lamp 39
+#define red_lamp 38
+#define btn_forward 35
+#define btn_stop 36
+#define btn_backward 37
+
+#define DIR 6
+#define PUL 7
+
+AccelStepper stepper = AccelStepper(1, PUL, DIR);//드라이버를 쓸때는 1을쓴다!
+
+uint16_t au16data[16];
+uint8_t au8data[10]; 
+
+uint16_t now_max_speed = 1600;
+uint16_t now_acceleration = 800;
+
+bool read_coil(uint8_t * data,uint16_t addr){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  return bitRead(data[array_num], array_index);
+}
+void write_coil(uint8_t * data,uint16_t addr,bool value){
+  uint8_t array_num = addr / 8;
+  uint8_t array_index = addr % 8;
+  bitWrite(data[array_num], array_index, value);
+}
+void write_int32_reg(uint16_t * data,uint16_t addr,int32_t value){
+  data[addr] = value >> 16;
+  data[addr+1] = value & 0xFFFF;
+}
+void write_int16_reg(uint16_t * data,uint16_t addr,int16_t value){
+  data[addr] = value;
+}  
+int16_t read_int16_reg(uint16_t * data,int16_t addr){
+  return data[addr];
+}  
+void setup() {
+  stepper.setMaxSpeed(1600);
+  stepper.setAcceleration(800); 
+  
+  for(int i=38; i<=51; i++){
+    pinMode(i, OUTPUT);
+  }
+  for(int i=22; i<=37; i++){
+    pinMode(i, INPUT);
+  }
+  usart3init(9600);
+  startSimpleModbus(1,au16data, au8data);
+  write_int16_reg(au16data,2,1600);
+  write_int16_reg(au16data,3,0);
+  write_int16_reg(au16data,4,-1600);
+  au16data[5] = now_max_speed;
+  au16data[6] = now_acceleration;
+}
+void loop() {
+  for(byte n=0; n<8; n++){
+    digitalWrite(38+n, bitRead(au8data[0], n));
+  }
+  for(byte n=0; n<6; n++){
+    digitalWrite(38+8+n, bitRead(au8data[1], n));
+  }
+  for(byte n=0; n<8; n++){
+    //22~29
+    bitWrite( au8data[2],n, digitalRead(n+22) ) ;
+  }
+  for(byte n=0; n<8; n++){
+    //30~37
+    bitWrite( au8data[3],n, digitalRead(n+8+22) ) ;
+  }
+  
+  if(read_coil(au8data,29) == HIGH){
+    //녹색
+    stepper.moveTo(read_int16_reg(au16data,2));
+  }
+  if(read_coil(au8data,30) == HIGH){
+    //노랑
+    stepper.moveTo(read_int16_reg(au16data,3));
+  }
+  if(read_coil(au8data,31) == HIGH){
+    //빨강
+    stepper.moveTo(read_int16_reg(au16data,4));
+  }
+
+  write_int32_reg(au16data,0,stepper.currentPosition());
+
+  if(now_max_speed != au16data[5]){
+    stepper.setMaxSpeed(au16data[5]);
+    now_max_speed = au16data[5];
+  }
+  if(now_acceleration != au16data[6]){
+    stepper.setAcceleration(au16data[6]);
+    now_acceleration = au16data[6];
+  }
+
+  stepper.run();
+}
+
+
+
+
