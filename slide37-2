@@ -1,0 +1,52 @@
+//1.블링크 클라우드에서 버튼 2개가 있고 각버튼을 눌렀음을 esp8266시리얼모터에 출력하시오!
+//ESP8266보드가 1초간격으로 특정한값을 클라우드로 업로드 하도록 하시오!
+
+#define BLYNK_PRINT Serial
+
+#define BLYNK_TEMPLATE_ID "TMPLgOU_uF3a"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+BlynkTimer timer;
+
+char auth[] = "2N0qzz1fjeJLWaqiZRRvJvf2ri0FAS_6";
+
+//내인터넷 공유기 아이디 비밀번호
+char ssid[] = "nockanda";
+char pass[] = "11213144";
+
+BLYNK_WRITE(V0)
+{
+  int pinValue = param.asInt(); 
+  Serial.print("첫번쨰 버튼이 눌려졌다!=");
+  Serial.println(pinValue);
+}
+
+BLYNK_WRITE(V1)
+{
+  int pinValue = param.asInt(); 
+  Serial.print("두번쨰 버튼이 눌려졌다!=");
+  Serial.println(pinValue);
+}
+
+void myTimerEvent()
+{
+  Blynk.virtualWrite(V2, random(0,1000));
+}
+
+void setup()
+{
+  // Debug console
+  Serial.begin(9600);
+
+  Blynk.begin(auth, ssid, pass);
+  timer.setInterval(1000L, myTimerEvent);
+}
+
+void loop()
+{
+  Blynk.run();
+  timer.run();
+}
+
+
