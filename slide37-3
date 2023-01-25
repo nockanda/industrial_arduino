@@ -1,0 +1,185 @@
+#include "nockanda.h"
+#define BLYNK_PRINT Serial
+#define BLYNK_TEMPLATE_ID "TMPLgOU_uF3a"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+BlynkTimer timer;
+
+//RX를 D3에 연결, Tx를 D4
+SoftwareSerial max3232(D3,D4);
+Nockanda_modbus nm(&max3232);
+
+char auth[] = "2N0qzz1fjeJLWaqiZRRvJvf2ri0FAS_6";
+
+//내인터넷 공유기 아이디 비밀번호
+char ssid[] = "nockanda";
+char pass[] = "11213144";
+
+BLYNK_WRITE(V0)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,0,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,0,0xFF00);  
+  }
+}
+
+BLYNK_WRITE(V1)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,1,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,1,0xFF00);  
+  }
+}
+
+BLYNK_WRITE(V2)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,2,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,2,0xFF00);  
+  }
+}
+
+BLYNK_WRITE(V3)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,3,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,3,0xFF00);  
+  }
+}
+BLYNK_WRITE(V4)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,4,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,4,0xFF00);  
+  }
+}
+BLYNK_WRITE(V5)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,5,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,5,0xFF00);  
+  }
+}
+BLYNK_WRITE(V6)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,6,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,6,0xFF00);  
+  }
+}
+BLYNK_WRITE(V7)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,7,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,7,0xFF00);  
+  }
+}
+BLYNK_WRITE(V8)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,8,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,8,0xFF00);  
+  }
+}
+BLYNK_WRITE(V9)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,9,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,9,0xFF00);  
+  }
+}
+BLYNK_WRITE(V10)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,10,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,10,0xFF00);  
+  }
+}
+BLYNK_WRITE(V11)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,11,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,11,0xFF00);  
+  }
+}
+BLYNK_WRITE(V12)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,12,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,12,0xFF00);  
+  }
+}
+BLYNK_WRITE(V13)
+{
+  int pinValue = param.asInt(); 
+  if(pinValue == 0){
+    nm.nockanda_write_single_coil_queue(1,13,0x0000); 
+  }else if(pinValue == 1){
+    nm.nockanda_write_single_coil_queue(1,13,0xFF00);  
+  }
+}
+
+void myTimerEvent()
+{
+  nm.nockanda_read_hoding_register_queue(1,0,2,0x0000);
+}
+
+
+//블링크로 산업용 아두이노의 OUTPUT포트를 제어하고
+//연결되어있는 레지스터의 센서값을 읽어온다!
+void write_single_coil(byte id,uint16_t addr,uint16_t data){
+  Serial.println("write single coil 완료함");
+}
+void read_holding_register(byte id, byte * data,uint16_t offset,uint16_t len,uint16_t num){
+  Serial.println("read_holding_register 완료함");
+  //data[3] ~ data[4] : 레지스터0
+  //data[5] ~ data[6] : 레지스터1
+  uint16_t reg0 = data[3] * 256 + data[4];
+  uint16_t reg1 = data[5] * 256 + data[6];
+  Blynk.virtualWrite(V14, reg0);
+  Blynk.virtualWrite(V15, reg1);
+}
+
+void setup() {
+  Serial.begin(9600);//PC에 결과를 출력하기 위한 통신라인!
+  nm.begin(9600);//산업용 아두이노와 모드버스 RTU!
+  nm.write_single_coil_cb = write_single_coil;
+  nm.read_holding_register_cb = read_holding_register;
+
+  Blynk.begin(auth, ssid, pass);
+  timer.setInterval(1000L, myTimerEvent);
+}
+void loop() {
+  nm.loop(); //녹칸다의 모드버스 기능을 동작시키는 부분
+  Blynk.run();
+  timer.run();
+}
+
+
