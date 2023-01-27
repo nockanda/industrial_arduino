@@ -1,0 +1,37 @@
+//38번에 릴레이가있다!
+#define pump 38 //펌프
+#define flow 20 //유량
+
+volatile float myflow = 0;
+
+unsigned long t = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(pump,OUTPUT);
+  pinMode(flow,INPUT);
+  attachInterrupt(digitalPinToInterrupt(flow), nockanda, RISING);
+}
+
+void loop() {
+  if(Serial.available()){
+    char c = Serial.read();
+    if(c == '0'){
+      digitalWrite(pump,LOW);
+    }else if(c == '1'){
+      digitalWrite(pump,HIGH);
+    }
+  }
+
+  if(millis() - t > 100){
+    t = millis();
+    Serial.print("현재 유량=");
+    Serial.println(myflow);
+  }
+}
+
+void nockanda(){
+  myflow += (1/5888.0) * 1000;
+}
+
+
