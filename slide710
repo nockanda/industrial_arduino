@@ -1,0 +1,232 @@
+#include <SPI.h>
+#include <Ethernet.h>
+#include <SoftwareSerial.h>
+#include "CRC16.h" //CRC라이브러리
+#include "CRC.h" //CRC라이브러리
+
+#define tcp_led 8
+#define rtu_led 9
+
+SoftwareSerial faduino(5,6);
+
+//보드가 서버역할을 하겠다!(1~65536)
+EthernetServer server(60000); //서버를 60000번 포트에 열겠다!
+
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}; //내가 사용할 mac주소
+IPAddress ip(192,168,1,177); //내가 고정 IP를 쓸 경우 활용됨!
+
+byte tcp_header[6];
+byte buff[50];
+byte res[50];
+
+void setup() {
+  Serial.begin(9600); //PC-아두이노보드간 통신(결과를 PC에 출력하기 위한)
+  faduino.begin(9600); //건너뛰기
+
+  pinMode(tcp_led,OUTPUT); 
+  pinMode(rtu_led,OUTPUT);
+  //Ethernet.begin(mac, ip); //내가 상단에 있는 IP주소를 할당받겠다!
+  Ethernet.begin(mac); //공유기가 할당해준 주소를 그냥 받겠다!
+
+  server.begin(); //TCP서버를 OPEN
+  Serial.print("TCP server is at ");
+  Serial.println(Ethernet.localIP());
+}
+
+void loop() {
+  //1:1통신만 가능하다!
+  //서버가 클라이언트의 접속을 기다리는것을 listen한다라고 표현한다!
+  EthernetClient client = server.available();
+  //클라이언트가 접속한 상태가 아니라면 = 소켓이 생성된 상태가 아니라면~
+  if (!client) {
+    digitalWrite(tcp_led,LOW);
+    return;
+  }
+  digitalWrite(tcp_led,HIGH);
+  Serial.println("새로운 클라이언트의 등장!");
+
+  //지금 접속한 클라이언트가 접속이 유효하다면~
+  //클라이언트와 접속이 해제되면 loop는 종료된다!
+  while(client.connected()){
+    if(client.available()){
+      client.readBytes(tcp_header,6); //6byte읽기!
+      uint16_t len = tcp_header[4]*256+tcp_header[5];
+      client.readBytes(buff,len);
+      byte fc = buff[1];
+
+      //CRC계산하기!
+      uint16_t req_crc = crc16(buff, len, 0x8005, 0xFFFF, 0, true, true);
+      byte req_crc_high = req_crc/256;
+      byte req_crc_low = req_crc%256;
+      //buff안에 있는 내용을 len개만큼 산업용 아두이노로 전송한다!(modbus rtu request)
+      faduino.write(buff,len);
+      faduino.write(req_crc_low);
+      faduino.write(req_crc_high);
+
+      Serial.print("req=");
+      for(int i = 0;i<len;i++){
+        Serial.print(buff[i],HEX);
+        Serial.print(",");
+      }
+      Serial.println();
+
+      //산업용 아두이노가 응답을 보낼때까지 대기
+      unsigned long timeout_t = millis();
+      bool is_timeout = false;
+      while(true){
+        if(faduino.available()){
+          digitalWrite(rtu_led,HIGH);
+          break;
+        }
+        if(millis() - timeout_t > 500){
+          digitalWrite(rtu_led,LOW);
+          is_timeout = true;
+          break;
+        }
+      }
+      if(!is_timeout){
+        //응답데이터가 수신 대기중인 상태
+        //산업용 아두이노가 응답을 한다! 응답 데이터의 길이가 몇인가?
+        if(fc == 5){
+          //write single coil
+          //8개 읽어들이면 OK
+          faduino.readBytes(buff,8);
+          //TCP쪽으로 응답!
+          for(int i = 0;i<6;i++){
+            res[i] = tcp_header[i];  
+          }
+          for(int i = 0;i<6;i++){
+            res[6+i] = buff[i];  
+          }
+          
+          client.write(res,12);
+        }else if(fc == 15){
+          //write multiple coils
+          //8개 읽어들이면 OK
+          faduino.readBytes(buff,8);
+          //TCP쪽으로 응답!
+          for(int i = 0;i<6;i++){
+            res[i] = tcp_header[i];  
+          }
+          for(int i = 0;i<6;i++){
+            res[6+i] = buff[i];  
+          }
+          
+          client.write(res,12);
+        }else if(fc == 1){
+          //read coils
+          //3개읽기
+          faduino.readBytes(buff,3);
+          byte cnt = buff[2];
+          byte recv[cnt+2];
+          faduino.readBytes(recv,cnt+2);
+          
+          for(int i = 0;i<cnt+2;i++){
+            buff[3+i] = recv[i];
+          }
+          //TCP쪽으로 응답!
+          uint16_t res_len = 3+cnt;
+          
+          for(int i = 0;i<4;i++){
+            res[i] = tcp_header[i];  
+          }
+          res[4] = res_len / 256;
+          res[5] = res_len % 256;
+          for(int i = 0;i<res_len;i++){
+            res[6+i] = buff[i];  
+          }
+          for(int i = 0;i<6+res_len;i++){
+            Serial.print(res[i],HEX);
+            Serial.print(",");
+          }
+          Serial.println();
+          client.write(res,6+res_len);
+          
+        }else if(fc == 3){
+          //read holding register
+          faduino.readBytes(buff,3);
+          byte cnt = buff[2];
+          byte recv[cnt+2];
+          faduino.readBytes(recv,cnt+2);
+          //TCP쪽으로 응답!
+          uint16_t res_len = 3+cnt; //5
+          
+          for(int i = 0;i<4;i++){
+            res[i] = tcp_header[i];  
+          }
+          res[4] = res_len / 256;
+          res[5] = res_len % 256;
+          for(int i = 0;i<3;i++){
+            res[6+i] = buff[i];  
+          }
+          for(int i = 0;i<cnt;i++){
+            res[3+6+i] = recv[i];  
+          }
+          client.write(res,6+res_len);
+        }else if(fc == 6){
+          faduino.readBytes(buff,8);
+          //TCP쪽으로 응답!
+          for(int i = 0;i<6;i++){
+            res[i] = tcp_header[i];  
+          }
+          for(int i = 0;i<6;i++){
+            res[6+i] = buff[i];  
+          }
+          client.write(res,12);
+        }else if(fc == 4){
+          //read input register
+          faduino.readBytes(buff,3);
+          byte cnt = buff[2];
+          byte recv[cnt+2];
+          faduino.readBytes(recv,cnt+2);
+          //TCP쪽으로 응답!
+          uint16_t res_len = 3+cnt; //5
+          
+          for(int i = 0;i<4;i++){
+            res[i] = tcp_header[i];  
+          }
+          res[4] = res_len / 256;
+          res[5] = res_len % 256;
+          for(int i = 0;i<3;i++){
+            res[6+i] = buff[i];  
+          }
+          for(int i = 0;i<cnt;i++){
+            res[3+6+i] = recv[i];  
+          }
+          client.write(res,6+res_len);
+        }else if(fc == 16){
+          //write multiple register
+          faduino.readBytes(buff,8);
+          //TCP쪽으로 응답!
+          for(int i = 0;i<6;i++){
+            res[i] = tcp_header[i];  
+          }
+          for(int i = 0;i<6;i++){
+            res[6+i] = buff[i];  
+          }
+          
+          client.write(res,12);
+        }
+      }else{
+        //지정된 시간안에 rtu장비로부터 응답이 안왔다
+        Serial.println("예외코드를 TCP마스터에 응답하겠습니다!");
+        for(int i = 0;i<4;i++){
+            res[i] = tcp_header[i]; // 0,1,2,3
+        }
+        res[4] = 0x00;
+        res[5] = 0x03;
+        res[6] = buff[0];
+        res[7] = buff[1] + 0x80;
+        res[8] = 0x01;
+
+        client.write(res,9);
+      }
+      
+    }
+  }
+
+  Serial.println("클라이언트와 접속이 끊어졌다!");
+  
+}
+
+
